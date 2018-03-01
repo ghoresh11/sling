@@ -1,0 +1,4 @@
+blastp	blastp
+makeblastdb makeblastdb
+hmmscan hmmscan
+hmmpress	hmmpress

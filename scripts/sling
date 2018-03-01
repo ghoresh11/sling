@@ -1,0 +1,51 @@
+#!/usr/bin/env python2
+
+import argparse
+import sys
+
+tasks = {
+    'run' : 'Run the complete search strategy on the input genomes',
+    'prepare': 'Process the input genomes (in FASTA format, and optionally GFF format) for use by the following tasks.',
+    'scan': 'Scan the ORFs from the preparation step using HMMER for profile collection',
+    'filter': 'Summarise and filter the scanning results to identify hits that meet the structure requirements',
+    'group' : 'Group all hit and partner ORFs using sequence similarity networks',
+    'version': 'Print version and exit',
+}
+
+
+
+ordered_tasks = [
+    'run',
+    'prepare',
+    'scan',
+    'filter',
+    'group',
+    'version'
+]
+
+
+def print_usage_and_exit():
+    print('\nUsage: sling <command> <required arguments> [options]')
+    print('\nTo get minimal usage for a command use: sling command')
+    print('\nTo get full help for a command use one of: sling command -h\tOR\tsling command --help\n')
+    print('\nAvailable commands:\n')
+    for task in ordered_tasks:
+        print("\t".join([task, tasks[task]]))
+    sys.exit(0)
+
+if len(sys.argv) == 1 or sys.argv[1] in ['-h', '-help', '--help']:
+    print_usage_and_exit()
+
+
+task = sys.argv.pop(1)
+
+if task.lower() in ["-v", "version", "--version", "--v"]:
+	task='version'
+
+if task not in tasks:
+    print('Task "' + task + '" not recognised. Cannot continue.\n')
+    sys.exit(0)
+
+
+exec('import sling.tasks.' + task)
+exec('sling.tasks.' + task + '.run()')
