@@ -11,7 +11,6 @@ __all__ = [
     'scan',
     'filter',
     'group',
-    'run',
     'tasks',
 ]
 

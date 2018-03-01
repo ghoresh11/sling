@@ -1,0 +1,30 @@
+# Compiled python modules.
+*.pyc
+
+# Setuptools distribution folder.
+/dist/
+build/
+
+# Python egg metadata, regenerated from source files by setuptools.
+/*.egg-info
+
+*test.py
+
+## never upload the config gile
+
+
+
+# my results for the benchmarking
+efflux/
+type6/
+toxins/
+crispr/
+figures/
+e_coli_collection/
+tutorial/
+# other folders used to create figures for paper
+.Rapp.history
+*.DS_Store
+figures_tables/
+lengths/
+systems_figures.R
