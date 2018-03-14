@@ -279,7 +279,7 @@ class GroupHits():
 		out.write("DATASET_HEATMAP\nSEPARATOR COMMA\nDATASET_LABEL," + ta + "\nCOLOR,#ff0000\nFIELD_LABELS," + ta +
 			"\nCOLOR_MIN,#eeeded\nCOLOR_MAX," + max_colors[network_type] + "\nUSER_MIN_VALUE,0\nUSER_MAX_VALUE," +str(max_val) +"\nDATA\n")
 		for i in range(0,len(strains)):
-			out.write(strains[i]+ ".1," + str(feature_vec[i]) + "\n") ## TODO: remove this 0.1 -> it's only because of a bug in basename
+			out.write(strains[i]+ "," + str(feature_vec[i]) + "\n") 
 		out.close()
 
 
