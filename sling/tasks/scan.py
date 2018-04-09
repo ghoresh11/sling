@@ -16,7 +16,7 @@ def run():
     parser.add_argument('hmm_db', help='Name of the predefined HMM database to use OR path to custom HMM file', metavar='STR/FILE')
     options = parser.parse_args()
     
-    scan = posh.scan.Scan(
+    scan = sling.scan.Scan(
             options.prep_id,
             options.scan_id,
             options.hmm_db,
