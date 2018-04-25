@@ -42,9 +42,9 @@ def load_config_file():
 
 def write_log(log_file_path, title, params, other):
 	log_file = open(log_file_path,"w")
-	log_file.write("########## POSH  ########## \n")
+	log_file.write("########## SLING  ########## \n")
 	log_file.write("##########"  + title +  "########## \n")
-	log_file.write("POSH version: " + str(__version__))
+	log_file.write(" SLING version: " + str(__version__))
 	log_file.write("\nTime : {:%Y-%m-%d %H:%M:%S}".format(datetime.datetime.now()))
 	log_file.write("\n### PARAMS ###\n")
 	for p in params:
