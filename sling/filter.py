@@ -3,6 +3,7 @@ import glob, os
 import pandas
 import sys
 import multiprocessing 
+import math
 
 class Error (Exception): pass
 
@@ -91,7 +92,7 @@ class Summarise:
 		## path to the requirement document of each built in DB
 		reqs = utils.databases
 
-		if self.args["req"] not in reqs:
+		if self.args["req"] not in reqs and self.args["req"] != "flexible":
 			## read the requirement file given by the user, if any field is missing -> default value is taken
 			req_file = os.path.abspath(self.args["req"])
 			self.args["req"] = "custom"
@@ -305,16 +306,30 @@ def parse_hmmer_results(args, source):
 				args["unfit_orfs"][name].unfit = True
 	return results_file
 
-def find_upstream_antitoxin(args,orf, orf_locs, flag = False):
+
+def choose_delta(deltas):
+	deltas = list(deltas)
+	chosen = deltas[0]
+	for d in deltas:
+		if abs(d) < abs(chosen):
+			chosen = d
+	return chosen 
+
+### cases in which we have AT - T (upstream for +, downstream for -)
+def find_upstream_antitoxin(args, orf, orf_locs, flag = False):
 
 	## this is the downstream gene for the reverse strand
 	if (orf.strand == "-" and args["req_dict"]["order"] == "upstream") or (orf.strand == "+" and args["req_dict"]["order"] == "downstream"): 
 		return False
 
-	filtered = orf_locs[orf_locs[2] >= orf.start - args["req_dict"]["max_distance"]] # antitoxin stop location
+	## AT stop >= T start - MAX_distance 
+	filtered = orf_locs[orf_locs[2] >= orf.start - args["req_dict"]["max_distance"]] 
+	
+	## AT stop <= T start + max overlap
 	filtered = filtered[filtered[2] <= orf.start + args["req_dict"]["max_overlap"]]
 
 
+	## couldn't find adjacent genes
 	if filtered.shape[0] == 0:
 		if orf.name not in args["unfit_orfs"]:
 			args["unfit_orfs"][orf.name] = orf
@@ -328,13 +343,15 @@ def find_upstream_antitoxin(args,orf, orf_locs, flag = False):
 			orf.unfit = True
 		return False
 
-	if orf.strand == "+":
+	if orf.strand == "+": ## this is the upstream gene
+		## min_length(aa) *3 <= AT stop - AT start <= max_length(aa)*3 
 		filtered = filtered[filtered[2] - filtered[1] >=  args["req_dict"]["min_upstream_length"]*3]
 		filtered = filtered[filtered[2] - filtered[1] <=  args["req_dict"]["max_upstream_length"]*3]
-	else:
+	else: ## this is the downstream gene
 		filtered = filtered[filtered[2] - filtered[1] >=  args["req_dict"]["min_downstream_length"]*3]
 		filtered = filtered[filtered[2] - filtered[1] <=  args["req_dict"]["max_downstream_length"]*3]
 
+	## didn't meet length requirements
 	if filtered.shape[0] == 0:
 		if orf.name not in args["unfit_orfs"]:
 			args["unfit_orfs"][orf.name] = orf
@@ -347,10 +364,8 @@ def find_upstream_antitoxin(args,orf, orf_locs, flag = False):
 			orf.reason = orf.reason + "Upstream length"
 			orf.unfit = True
 		return False
-	
-	## always choose the minimal delta
-	filtered = filtered[filtered[2] - orf.start == min(filtered[2] - orf.start)]
 
+	filtered = filtered[orf.start - filtered[2]  == choose_delta(orf.start - filtered[2])]
 	
 	if orf.strand == "+":
 		orf.upstream_at_start, orf.upstream_at_stop, orf.upstream_at_sequence = filtered[1].tolist()[0], filtered[2].tolist()[0], filtered[6].tolist()[0]
@@ -361,7 +376,7 @@ def find_upstream_antitoxin(args,orf, orf_locs, flag = False):
 	return True
 
 
-
+### cases in which we have T - AT (downstream for +, upstream for -)
 def find_downstream_antitoxin(args, orf, orf_locs, flag = False):
 
 	## this is the upstream gene for the reverse strand
@@ -370,7 +385,6 @@ def find_downstream_antitoxin(args, orf, orf_locs, flag = False):
 	
 	filtered = orf_locs[orf_locs[1] <= orf.stop + args["req_dict"]["max_distance"]] # antitoxin start location
 	filtered = filtered[filtered[1] >= orf.stop - args["req_dict"]["max_overlap"]] # antitoxin start location
-
 
 	if filtered.shape[0] == 0:
 		if orf.name not in args["unfit_orfs"]:
@@ -405,8 +419,8 @@ def find_downstream_antitoxin(args, orf, orf_locs, flag = False):
 			orf.reason = orf.reason + "Upstream length"
 			orf.unfit = True
 		return False
-	
-	filtered = filtered[orf.stop - filtered[1] == min(orf.stop - filtered[1])]
+
+	filtered = filtered[filtered[1] - orf.stop == choose_delta(filtered[1] - orf.stop)]
 	
 
 	if orf.strand == "-":

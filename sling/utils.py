@@ -15,7 +15,7 @@ def assure_path_exists(path):
 ## get the order from the requirement file
 def get_order(req,data_env):
 
-	if req not in databases:
+	if req not in databases and req != "flexible":
 		## read the requirement file given by the user, if any field is missing -> default value is taken
 		req_file = os.path.abspath(req)
 	else:

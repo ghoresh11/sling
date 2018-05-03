@@ -108,7 +108,7 @@ class Prepare:
 		
 		try:
 			results = pool.map_async(run_prepare,tuple(jobs))
-			results.get(12000) # give up to 20 mins for each process, if the function takes longer than 10 mins abort	
+			results.get(24000) # give up to 40 mins for each process, if the function takes longer than 40 mins abort	
 		except KeyboardInterrupt as e:
 			pool.terminate()
 		else:
