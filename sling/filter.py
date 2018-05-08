@@ -36,6 +36,7 @@ class Summarise:
 		self.args["req"] = req
 		self.args["out_dir"] = os.path.abspath(out_dir)
 		self.args["results_dir"] = os.path.join(self.args["out_dir"],filter_id+"_FILTER")
+		
 		self.req_dict = {}
 
 		d = os.path.abspath(os.path.dirname(__file__))
@@ -47,12 +48,12 @@ class Summarise:
 		### override value in requirement file if want to
 		if max_diff_avg_length != None:
 			self.req_dict["max_diff_avg_length"] = max_diff_avg_length
-		if min_hit_length != None:
+		if min_hit_length != None:	
 			self.req_dict["min_hit_length"] = min_hit_length
 		if max_hit_length != None:
 			self.req_dict["max_hit_length"] = max_hit_length
 
-		if min_downstream_length != None:
+		if min_downstream_length != None:			
 			self.req_dict["min_downstream_length"] = min_downstream_length
 		if max_downstream_length != None:
 			self.req_dict["max_downstream_length"] = max_downstream_length
@@ -73,9 +74,9 @@ class Summarise:
 			self.req_dict["order"] = order
 
 		## if user hasn't provided files, take defaults
-		if domains_file == "" and req == "toxins":
+		if domains_file == "" and req in utils.databases:
 			domains_file = os.path.join(data_env,"domains.txt")
-		if ignore_file == "" and req == "toxins":
+		if ignore_file == "" and req in utils.databases:
 			ignore_file = os.path.join(data_env,"domains_to_ignore.txt")
 
 		self.args["sep"] = sep
@@ -92,37 +93,18 @@ class Summarise:
 		## path to the requirement document of each built in DB
 		reqs = utils.databases
 
-		if self.args["req"] not in reqs and self.args["req"] != "flexible":
-			## read the requirement file given by the user, if any field is missing -> default value is taken
-			req_file = os.path.abspath(self.args["req"])
-			self.args["req"] = "custom"
-		else:
+		if self.args["req"] in reqs: ## built in collections
 			req_file = os.path.join(data_env , self.args["req"]+ ".txt")
+		else: # not a built in collection, take the default values
+			req_file = os.path.join(data_env , "default.txt")
 
-		with open(req_file) as f:
+		with open(req_file) as f: ## get all the values from the req file
 			for line in f:
 				key, val = line.strip().split()
-				if key!="order":
+				if key != "order":
 					val = int(val)
 				self.req_dict[key] = val
 
-		## make sure all params were given by the user for a custom DB
-		keys  = self.req_dict.keys()
-		if "order" not in keys:
-			sys.exit("Missing value in requirement file: 'order'")
-		
-		required_params = ["order","max_diff_avg_length","min_hit_length","max_hit_length","max_distance",
-		"max_overlap","min_upstream_length","max_upstream_length","min_downstream_length","max_downstream_length"]
-		
-		for r in required_params:
-			if "upstream" in r and self.req_dict["order"] == "downstream": # don't need this param
-				continue
-			if "downstream" in r and self.req_dict["order"] == "upstream": # don't need this param
-				continue
-			if r not in keys:
-				sys.exit("Missing value in requirement file: '" + r + "'")
-
-	
 	def run(self):
 		## get domains' lengths and domains to ignore
 		self._parse_domains()
@@ -172,6 +154,7 @@ class Summarise:
 
 
 def run_summarise(args):
+	
 	parse_orf_locs(args) # get location and sequence of all available ORFs
 
 	# parse all the hmmer results, keep only rows that match conditions

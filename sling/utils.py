@@ -15,9 +15,9 @@ def assure_path_exists(path):
 ## get the order from the requirement file
 def get_order(req,data_env):
 
-	if req not in databases and req != "flexible":
+	if req not in databases:
 		## read the requirement file given by the user, if any field is missing -> default value is taken
-		req_file = os.path.abspath(req)
+		req_file = os.path.join(data_env,"default.txt")
 	else:
 		req_file = os.path.join(data_env,req + ".txt")
 
@@ -28,7 +28,6 @@ def get_order(req,data_env):
 			key, val = line.strip().split()
 			if key == "order":
 				return val
-	sys.exit("Must provide 'order' argument in the requirement file!")
 
 def load_config_file():
 	config_file = os.path.join(os.path.abspath(os.path.dirname(__file__)),"CONFIG")

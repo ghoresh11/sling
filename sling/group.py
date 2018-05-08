@@ -30,7 +30,7 @@ class Group:
 		self.sep = sep
 		self.report_unfit = report_unfit
 
-		if self.order == None:
+		if self.order == None: ## user didn't override the order argument
 			d = os.path.abspath(os.path.dirname(__file__))
 			data_env = os.path.join(d, 'data/')
 			self.order = utils.get_order(self.req,data_env)
