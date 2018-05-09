@@ -108,7 +108,7 @@ class Prepare:
 		
 		try:
 			results = pool.map_async(run_prepare,tuple(jobs))
-			results.get(24000) # give up to 40 mins for each process, if the function takes longer than 40 mins abort	
+			results.get(50000) # give up to 40 mins for each process, if the function takes longer than 40 mins abort	
 		except KeyboardInterrupt as e:
 			pool.terminate()
 		else:
@@ -155,7 +155,8 @@ def sixframe_translation(args):
 	orf_locs_out.close()
 
 ''' get all open reading frames in current frame '''
-def get_frame_orfs(args,protein_frame,nuc_frame,i,contig,sixframe_out,orf_locs_out):
+def get_frame_orfs(args, protein_frame, nuc_frame, i, contig, sixframe_out, orf_locs_out):
+	
 	frame_length = len(protein_frame) # get length of the protein sequence
 
 	ORFs = protein_frame.split("*") # split at stop codons
@@ -163,10 +164,15 @@ def get_frame_orfs(args,protein_frame,nuc_frame,i,contig,sixframe_out,orf_locs_o
 	stops = map(len,ORFs) # get the stop codon positions	
 	stops = [x+1 for x in stops]
 	stops= list(np.cumsum(stops))
+	
 	starts = [0] + stops[:-1] # get the start codons positions
 
 	for index in range(0,len(ORFs)): # iterate over all possible ORFs
 		nuc_seq = nuc_frame[starts[index] * 3 : stops[index] * 3] # get nuc sequence of that ORF
+
+		if not translate(nuc_seq).endswith("*"): ## premature stop due to end of contig
+			continue
+
 		check_orf_conditions(args,ORFs[index],nuc_seq,i,contig,starts[index],stops[index],sixframe_out,orf_locs_out,frame_length)
 	return 1
 
@@ -178,7 +184,7 @@ def check_orf_conditions(args,protein_seq,nuc_seq,strand,contig,start,stop,sixfr
 		if res != None: # found an ORF with the higher priority codon
 			break
 
-	if res == None:
+	if res == None: ## no start codon with the permitted start codons
 		return 
 
 	orf = res[0] # the actual ORF
@@ -206,33 +212,24 @@ def find_start_codon(args,codon,protein_seq,nuc_seq,start,stop,strand,frame_leng
 	if aa_index>0 and len(protein_seq[aa_index:])>=args["min_orf_length"] and nuc_seq[aa_index*3:aa_index*3 + 3] == codon: # check that all conditions apply
 		## use M
 		protein_seq = protein_seq[aa_index:]
-		start = start + aa_index 
+		start = start + aa_index ## new start is with an offset of aa_index
 		strand_symbol = "+"
 		nuc_seq = nuc_seq[aa_index*3:]
+
+
+		start = start*3  + strand%3
+		stop = stop*3  + strand%3 - 1
 		
-		## handle minus strand	
-		if strand>2:
+		if strand > 2:
 			tmp = start
-			start = frame_length - stop 
-			stop = frame_length - tmp 
+			start = frame_length*3 - stop 
+			stop = frame_length*3 - tmp 
+			
+			if strand == 5: ## fix for last frame to get everything in place
+				start += 3
+				stop += 3
+			
 			strand_symbol = "-"
-		
-		## fix coordinates in nucleotide sequence:
-		if strand_symbol == "+":
-			start = start*3 + 1 + strand%3
-			stop = stop*3 - 2 + strand%3
-		else:
-			### "bandade" to get the cooridantes correct
-			add_stop = 0
-			add_start = 3
-			if strand == 3:
-				add_stop = 1
-				add_start = 4
-			elif strand == 5:
-				add_stop = 2
-				add_start = 5
-			start = start * 3 + add_start
-			stop = stop * 3 + add_stop
 
 		protein_seq = "M" + protein_seq[1:] # always put an M at start of protein sequence
 		return [protein_seq,strand_symbol,start,stop] # return all values
