@@ -91,6 +91,8 @@ class Prepare:
 				gff_file = ""
 				if basename in gff_files:
 					gff_file = os.path.join(self.args["gff_dir"],gff_files[basename])
+				else:
+					print("Warning: No GFF file found for file: " + file )
 
 				genome_prep = dict(self.args)
 				genome_prep["strain"] = basename
@@ -108,9 +110,13 @@ class Prepare:
 		
 		try:
 			results = pool.map_async(run_prepare,tuple(jobs))
-			results.get(50000) # give up to 40 mins for each process, if the function takes longer than 40 mins abort	
+			results.get(120000)
 		except KeyboardInterrupt as e:
 			pool.terminate()
+			sys.exit("Terminated by user")
+		except ValueError as e:
+			pool.terminate()
+			sys.exit("Names of contigs in the GFF file (column 1) must match name of the descriptors in the FASTA files.")
 		else:
 			pool.close()
 		pool.join()
@@ -128,6 +134,7 @@ def run_prepare(args):
 
 
 def sixframe_translation(args):
+
 	outfile_sixframe = os.path.join(args["out_dir"],args["strain"] + ".sixframe.fasta") # input for hmmscan
 	outfile_orf_locs = os.path.join(args["out_dir"],args["strain"] + ".sixframe.bed") # locations of ORFs for later	
 
@@ -246,8 +253,6 @@ def annotated_orf_locs(args):
 
 	args["orf_id"] = 0
 
-	flag = False
-
 	annotated_fasta = os.path.join(args["out_dir"], args["strain"]+".annotated.fasta")
 	annotated_orf_locs = os.path.join(args["out_dir"],args["strain"]+".annotated.bed") # locations of ORFs for later
 
@@ -269,14 +274,15 @@ def annotated_orf_locs(args):
 			if len(line)<7: # not full line, ignore
 				continue
 
-			if (line[2]=="CDS"): # coding sequence
+			if (line[2]=="CDS"): # only coding sequence
 				strand = line[6]
 				start = int(line[3])
 				stop= int(line[4])
 				contig = line[0]
 
-				if contig not in args["contigs"]:
-					sys.exit("Name of contigs in FASTA file must match contigs in GFF file")
+
+				if contig not in args["contigs"].keys():
+					raise ValueError("Error: Name of contigs in FASTA file must match contigs in GFF file")
 
 				orf_name = "annotation|Strain:" + args["strain"] + "|ORF:" +str(args["orf_id"]) + "|Contig:"+ str(contig) + "|Strand:"+strand+"|Start:" + str(start) + "|Stop:" + str(stop)
 
@@ -298,3 +304,5 @@ def annotated_orf_locs(args):
 	
 	fasta_out.close()
 	orf_locs_out.close()
+
+
