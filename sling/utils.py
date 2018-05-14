@@ -3,10 +3,15 @@ import sys
 from sling import __version__ 
 import datetime
 
+# ### get the built-in databases
+def get_dbs():
+	d = os.path.abspath(os.path.dirname(__file__))
+	data_env = os.path.join(d, 'data/')
+	return open(os.path.join(data_env,"DATABASES")).read().split()
+
 ## every time there's a new database, add here
 MAX_ATTEMPTS = 2 # try every process a maximum MAX attempts times
-databases = ["toxins", "RND_pump"]
-
+databases = get_dbs()
 
 def assure_path_exists(path):
     if not os.path.exists(path):

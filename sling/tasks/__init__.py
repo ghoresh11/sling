@@ -4,6 +4,7 @@ __all__ = [
     'filter',
     'group',
     'run',
+    'create_db',
     'version',
 ]
 

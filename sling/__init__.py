@@ -11,6 +11,7 @@ __all__ = [
     'scan',
     'filter',
     'group',
+    'create_db',
     'tasks',
 ]
 

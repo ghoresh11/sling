@@ -26,7 +26,7 @@ def run():
     parser.add_argument('prep_id',type=str, help="ID of prepare run", metavar='STR')
     parser.add_argument('scan_id',type=str,  help="ID of scan run", metavar='STR')
     parser.add_argument('filter_id',type=str,  help="ID of filter run", metavar='STR')
-    parser.add_argument('hmm_db',type=str, help='Name of the predefined HMM database [toxins or RND_pump] OR path to custom HMM file', metavar='STR/FILE')
+    parser.add_argument('hmm_db',type=str, help='Name of the predefined HMM database ' + str(sling.utils.databases) + ' OR path to custom HMM file', metavar='STR/FILE')
     
 
     options = parser.parse_args()

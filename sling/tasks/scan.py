@@ -13,7 +13,7 @@ def run():
     parser.add_argument('-o','--out_dir', help='Working for all the output files', metavar="PATH",default=".")
     parser.add_argument('prep_id', help='ID of prepare run', metavar='STR')
     parser.add_argument('scan_id', help='ID of scan run', metavar='STR')
-    parser.add_argument('hmm_db', help='Name of the predefined HMM database [toxins or RND_pump] OR path to custom HMM file', metavar='STR/FILE')
+    parser.add_argument('hmm_db', help='Name of the predefined HMM database ' + str(sling.utils.databases) +  ' OR path to custom HMM file', metavar='STR/FILE')
     options = parser.parse_args()
     
     scan = sling.scan.Scan(

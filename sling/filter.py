@@ -106,6 +106,8 @@ class Summarise:
 				self.req_dict[key] = val
 
 	def run(self):
+
+		utils.assure_path_exists(self.args["results_dir"])
 		## get domains' lengths and domains to ignore
 		self._parse_domains()
 		self._parse_domains_to_ignore()

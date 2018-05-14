@@ -9,6 +9,7 @@ tasks = {
     'scan': 'Scan the ORFs from the preparation step using HMMER for profile collection',
     'filter': 'Summarise and filter the scanning results to identify hits that meet the structure requirements',
     'group' : 'Group all hit and partner ORFs using sequence similarity networks',
+    'create_db' : 'Add custom HMM collection and requirements as built into SLING',
     'version': 'Print version and exit',
 }
 
@@ -20,6 +21,7 @@ ordered_tasks = [
     'scan',
     'filter',
     'group',
+    'create_db',
     'version'
 ]
 

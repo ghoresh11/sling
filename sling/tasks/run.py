@@ -43,7 +43,7 @@ def run():
     ## Required
     parser.add_argument('run_id', type=str, help='Directory to save all result files', metavar='PATH')
     parser.add_argument('input_dir',  help='Name of directory containing FASTA files', metavar='PATH')
-    parser.add_argument('hmm_db', help='Name of the predefined HMM database [toxins or RND_pump] OR path to custom HMM file', metavar='STR/FILE')
+    parser.add_argument('hmm_db', help='Name of the predefined HMM database ' + str(sling.utils.databases) + ' OR path to custom HMM file', metavar='STR/FILE')
 
     
     options = parser.parse_args()
