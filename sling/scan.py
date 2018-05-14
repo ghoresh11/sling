@@ -28,6 +28,8 @@ class Scan:
 
 
 	def _run_hmmpress(self):
+		if not os.path.isfile(self.args["hmm_db"]):
+			sys.exit("Error: could not find HMM file: [" + self.args["hmm_db"] + "]") 
 		self.args["hmm_db"] = os.path.abspath(self.args["hmm_db"])
 		res = subprocess.call([self.args["configs"]["hmmpress"],self.args["hmm_db"]])
 
