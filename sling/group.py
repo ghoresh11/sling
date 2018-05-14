@@ -17,7 +17,8 @@ class Group:
 		min_blast_evalue = 0.01,
 		save_to_ITOL = False,
 		sep = ",",
-		report_unfit = False):
+		report_unfit = False,
+		cpu = 2):
 
 		self.req = req
 		self.order = order
@@ -29,6 +30,7 @@ class Group:
 		self.save_to_ITOL = save_to_ITOL
 		self.sep = sep
 		self.report_unfit = report_unfit
+		self.cpu = cpu
 
 		if self.order == None: ## user didn't override the order argument
 			d = os.path.abspath(os.path.dirname(__file__))
@@ -62,7 +64,7 @@ class Group:
 
 
 		blast = run_blast.RunBlast(self.order,self.filter_id, self.group_id, out_dir = self.out_dir, 
-			min_blast_evalue = self.min_blast_evalue, sep = self.sep, report_unfit = self.report_unfit)
+			min_blast_evalue = self.min_blast_evalue, sep = self.sep, report_unfit = self.report_unfit, cpu = self.cpu)
 		blast.run()
 		group = group_operons.GroupHits(self.order,self.filter_id, self.group_id,
 			out_dir = self.out_dir,

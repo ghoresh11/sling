@@ -12,6 +12,7 @@ def run():
     parser.add_argument('-u','--report_unfit', action='store_true', help='Generate outputs for HMMER hits that did not meet requirements  [%(default)s]', default=False)
     parser.add_argument('-mbe','--min_blast_evalue', type=float, help='Minimum BLAST evalue to use for an edge in the sequence similarity network [%(default)s]', metavar='INT', default=0.01)
     parser.add_argument('-mi','--min_identity', type=int, help='Minimum BLAST identity to use for an edge in the sequence similarity network [%(default)s]', metavar='INT', default=30)
+    parser.add_argument('-c','--cpu', type=int, help='Number of CPUs to use [%(default)s]', default=2, metavar='INT')
     parser.add_argument('-o','--out_dir', type=str, help='Directory for all the output files', metavar="PATH",default=".")
     parser.add_argument('-s','--sep', type=str, help='Seperator for the input and output files, [%(default)s]', default=",", metavar='STR')
     parser.add_argument('filter_id',type=str,  help="ID of filter run", metavar='STR')
@@ -29,5 +30,6 @@ def run():
         min_blast_evalue = options.min_blast_evalue,
         save_to_ITOL = options.save_to_ITOL,
         sep = options.sep,
-        report_unfit = options.report_unfit)
+        report_unfit = options.report_unfit,
+        cpu = options.cpu)
     group.run()

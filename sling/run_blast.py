@@ -6,11 +6,11 @@ import warnings
 
 class Error (Exception): pass
 
-def run_blast(out_dir,file_type,evalue):	
+def run_blast(out_dir,file_type,evalue,cpu):	
 	configs = utils.load_config_file()
 	
 	command = map(str,[configs["makeblastdb"],"-in",out_dir + "/" + file_type + ".fasta","-dbtype","prot"] )
-	command2 = map(str,[configs["blastp"], "-db",out_dir + "/" + file_type + ".fasta", "-query", out_dir + "/" + file_type + ".fasta","-out",out_dir + "/" + file_type + "_blast_results","-outfmt","6","-evalue",evalue])
+	command2 = map(str,[configs["blastp"], "-db",out_dir + "/" + file_type + ".fasta", "-query", out_dir + "/" + file_type + ".fasta","-out",out_dir + "/" + file_type + "_blast_results","-outfmt","6","-evalue",evalue, "-num_threads", cpu])
 	attempt = 0
 	res = 1 
 	while attempt < utils.MAX_ATTEMPTS and res != 0:
@@ -32,7 +32,8 @@ class RunBlast:
 		out_dir = ".",
 		min_blast_evalue = 0.01,
 		sep = ",",
-		report_unfit = False):
+		report_unfit = False,
+		cpu = 2):
 		
 		self.results_dir = os.path.join(out_dir,filter_id + "_FILTER")
 		self.out_dir = os.path.join(out_dir,group_id + "_GROUP","blast_files")
@@ -42,7 +43,7 @@ class RunBlast:
 		self.order = order
 		self.sep = sep
 		self.report_unfit = report_unfit
-
+		self.cpu = 2
 
 
 	def _hits_to_fasta(self): # combine all the hits and write them into a single fasta file to run blast
@@ -121,11 +122,11 @@ class RunBlast:
 		self._hits_to_fasta()
 
 		### run blast in multiple threads
-		run_blast(self.out_dir,"hits",self.min_blast_evalue)
+		run_blast(self.out_dir,"hits",self.min_blast_evalue,self.cpu)
 		
 		if self.order == "both":
-			run_blast(self.out_dir,"upstream",self.min_blast_evalue)
-			run_blast(self.out_dir,"downstream",self.min_blast_evalue)
+			run_blast(self.out_dir,"upstream",self.min_blast_evalue, self.cpu)
+			run_blast(self.out_dir,"downstream",self.min_blast_evalue, self.cpu)
 		else:
-			run_blast(self.out_dir,"partners",self.min_blast_evalue)
+			run_blast(self.out_dir,"partners",self.min_blast_evalue, self.cpu)
 

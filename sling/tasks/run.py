@@ -101,7 +101,8 @@ def run():
         min_blast_evalue = options.min_blast_evalue,
         save_to_ITOL = options.save_to_ITOL,
         sep = options.sep,
-        report_unfit = options.report_unfit)
+        report_unfit = options.report_unfit,
+        cpu = options.cpu)
     group.run()
 
 
