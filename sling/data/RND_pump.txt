@@ -3,6 +3,8 @@ min_hit_length	700
 max_hit_length	1500
 min_upstream_length	100
 max_upstream_length	1000
+min_downstream_length	0
+max_downstream_length	0
 max_distance	500
 max_overlap	20
 order	upstream

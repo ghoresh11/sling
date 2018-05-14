@@ -5,6 +5,7 @@ __all__ = [
     'group',
     'run',
     'create_db',
+    'view_dbs',
     'version',
 ]
 

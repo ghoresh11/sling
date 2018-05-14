@@ -10,6 +10,7 @@ tasks = {
     'filter': 'Summarise and filter the scanning results to identify hits that meet the structure requirements',
     'group' : 'Group all hit and partner ORFs using sequence similarity networks',
     'create_db' : 'Add custom HMM collection and requirements as built into SLING',
+    'view_dbs': 'See list of avaiable built-in collections and their parameters',
     'version': 'Print version and exit',
 }
 
@@ -22,6 +23,7 @@ ordered_tasks = [
     'filter',
     'group',
     'create_db',
+    'view_dbs',
     'version'
 ]
 
