@@ -26,7 +26,12 @@ class CreateDB:
 
 		self.name = name.lower()
 		self.hmm_file = os.path.abspath(hmm_file)
-		self.sling_dir = os.path.join(os.path.abspath(sling_dir),"sling","data")
+		self.sling_dir = sling_dir
+		if sling_dir != None:
+			self.sling_dir = os.path.join(os.path.abspath(sling_dir),"sling","data")
+		else:
+			print("####  \n Warning: path to git repository not provided. Adding collection only to local installation of SLING.\n ####")
+		
 		self.order = order
 		self.max_diff_avg_length = max_diff_avg_length
 		self.min_hit_length = min_hit_length
@@ -107,21 +112,32 @@ class CreateDB:
 		reqs = utils.databases
 
 		if self.name in reqs:
-			sys.exit("Error: name given [" + self.name + "] already in SLING. Please choose different name")
+			sys.exit("Error: name given [" + self.name + "] already exists. Please choose different name")
 
 		d = os.path.abspath(os.path.dirname(__file__))
 		data_env = os.path.join(d, 'data/')
 
 		## create the requirements file
+		print("Summarising the structural requirements...")
 		self._constuct_req_file(data_env)
-		self._constuct_req_file(self.sling_dir)
+		if self.sling_dir != None:
+			self._constuct_req_file(self.sling_dir)
 
 		## create the hmm files and put them in the data environment
+		print("Constructing the HMM profile collection...")
 		self._constuct_hmm_files(data_env)
-		self._constuct_hmm_files(self.sling_dir)
-
+		if self.sling_dir != None:
+			self._constuct_hmm_files(self.sling_dir)
 		## once everything has succeeded, add to the DATABASES file
+		print("Finalising")
 		self._add_db(data_env)
-		self._add_db(self.sling_dir)
+		if self.sling_dir != None:
+			self._add_db(self.sling_dir)
+		
+		print("Successfully complete!")
+
+			
+			
+		
 
 

@@ -17,17 +17,18 @@ def run():
     parser.add_argument('-Md','--max_distance', type=int, help='Maximum distance between two opern proteins [10000000]', metavar='INT', default=None)
     parser.add_argument('-Mda','--max_diff_avg_length', type=int, help='Maximum difference between hit length and its average length defined in <domains_file> [10000000]', metavar='INT', default=None)
     parser.add_argument('-t','--order', type=str, help='Location of partner gene relative to hit. Options: upstream, downstream, either, both [either]', metavar='STR', default=None)  
+    parser.add_argument('-s','--sling_dir',type=str, help='Path to SLING git repository', metavar='PATH',default=None)
     parser.add_argument('name',type=str, help='Name of the predefined HMM database', metavar='STR')
-    parser.add_argument('hmm_file',type=str, help='Path to custom HMM file', metavar='FILE')
-    parser.add_argument('sling_dir',type=str, help='Path to SLING download', metavar='FILE')
+    parser.add_argument('hmm_db',type=str, help='Path to custom HMM file', metavar='FILE')
+
 
     
 
     options = parser.parse_args()
     
     create_db = sling.create_db.CreateDB(options.name,
-        options.hmm_file,
-        options.sling_dir,
+        options.hmm_db,
+        sling_dir = options.sling_dir,
         order = options.order,
         max_diff_avg_length = options.max_diff_avg_length,
         min_hit_length = options.min_hit_length,
