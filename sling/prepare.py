@@ -154,18 +154,16 @@ def sixframe_translation(args):
 			## doesn't assume the contigs are circular
 			for i in range(0,3):
 				# standard
-				get_frame_orfs(args, translate(genome[i:], table=args["codon_table"]),genome[i:], i, contig, sixframe_out, orf_locs_out)
+				get_frame_orfs(args, translate(genome[i:], table=args["codon_table"]),genome[i:], i, contig, sixframe_out, orf_locs_out, genome)
 				# complement
-				get_frame_orfs(args, translate(rev_genome[i:], table = args["codon_table"]),rev_genome[i:], i+3, contig, sixframe_out, orf_locs_out)
+				get_frame_orfs(args, translate(rev_genome[i:], table = args["codon_table"]),rev_genome[i:], i+3, contig, sixframe_out, orf_locs_out, genome)
 	
 	sixframe_out.close()
 	orf_locs_out.close()
 
 ''' get all open reading frames in current frame '''
-def get_frame_orfs(args, protein_frame, nuc_frame, i, contig, sixframe_out, orf_locs_out):
+def get_frame_orfs(args, protein_frame, nuc_frame, i, contig, sixframe_out, orf_locs_out, genome):
 	
-	frame_length = len(protein_frame) # get length of the protein sequence
-
 	ORFs = protein_frame.split("*") # split at stop codons
 	
 	stops = map(len,ORFs) # get the stop codon positions	
@@ -175,19 +173,20 @@ def get_frame_orfs(args, protein_frame, nuc_frame, i, contig, sixframe_out, orf_
 	starts = [0] + stops[:-1] # get the start codons positions
 
 	for index in range(0,len(ORFs)): # iterate over all possible ORFs
+		
 		nuc_seq = nuc_frame[starts[index] * 3 : stops[index] * 3] # get nuc sequence of that ORF
 
-		if not translate(nuc_seq).endswith("*"): ## premature stop due to end of contig
+		if not translate(nuc_seq).endswith("*"): ## premature stop due to end of contig, don't take this sequence
 			continue
 
-		check_orf_conditions(args,ORFs[index],nuc_seq,i,contig,starts[index],stops[index],sixframe_out,orf_locs_out,frame_length)
+		check_orf_conditions(args,ORFs[index],nuc_seq,i,contig,sixframe_out,orf_locs_out, genome)
 	return 1
 
 ''' given an ORF, find the relevant start codon and write to file if meets requirements '''
-def check_orf_conditions(args,protein_seq,nuc_seq,strand,contig,start,stop,sixframe_out,orf_locs_out,frame_length):	
+def check_orf_conditions(args,protein_seq,nuc_seq,strand,contig,sixframe_out,orf_locs_out, genome):	
 
 	for i in range(0,len(args["start_codons"])):
-		res = find_start_codon(args,args["start_codons"][i],protein_seq,nuc_seq,start,stop,strand,frame_length)
+		res = find_start_codon(args,args["start_codons"][i],protein_seq,nuc_seq,strand, genome)
 		if res != None: # found an ORF with the higher priority codon
 			break
 
@@ -211,32 +210,29 @@ def check_orf_conditions(args,protein_seq,nuc_seq,strand,contig,start,stop,sixfr
 	args["orf_id"] += 1
 
 ''' given an ORF, look for a start codon in the candidate ORF '''
-def find_start_codon(args,codon,protein_seq,nuc_seq,start,stop,strand,frame_length):
+def find_start_codon(args,codon,protein_seq,nuc_seq,strand, genome):
 
-	aa = translate(codon, args["codon_table"])
+	aa = translate(codon, args["codon_table"]) ## would return V, M or L depending on the start codon
 	aa_index = protein_seq.find(aa) # find the relevant aa of the start codon
 	
-	if aa_index>0 and len(protein_seq[aa_index:])>=args["min_orf_length"] and nuc_seq[aa_index*3:aa_index*3 + 3] == codon: # check that all conditions apply
+	if aa_index>0 and len(protein_seq[aa_index:])>=args["min_orf_length"] and nuc_seq[aa_index*3:aa_index*3 + 3] == codon: # check that start codon was found and the ORF is the correct length
 		## use M
-		protein_seq = protein_seq[aa_index:]
-		start = start + aa_index ## new start is with an offset of aa_index
+		protein_seq = protein_seq[aa_index:] ## take the ORF from the start
 		strand_symbol = "+"
 		nuc_seq = nuc_seq[aa_index*3:]
 
-
-		start = start*3  + strand%3
-		stop = stop*3  + strand%3 - 1
-		
 		if strand > 2:
-			tmp = start
-			start = frame_length*3 - stop 
-			stop = frame_length*3 - tmp 
-			
-			if strand == 5: ## fix for last frame to get everything in place
-				start += 3
-				stop += 3
-			
+			nuc_seq = reverse_complement(nuc_seq)
 			strand_symbol = "-"
+		
+		start = genome.find(nuc_seq)
+		stop = start + len(nuc_seq) + 1
+
+
+		if strand > 2:
+			if start>0:
+				start -= 1
+			stop -= 1
 
 		protein_seq = "M" + protein_seq[1:] # always put an M at start of protein sequence
 		return [protein_seq,strand_symbol,start,stop] # return all values
