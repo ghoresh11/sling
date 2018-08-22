@@ -9,8 +9,8 @@ class Error (Exception): pass
 def run_blast(out_dir,file_type,evalue,cpu):	
 	configs = utils.load_config_file()
 	
-	command = map(str,[configs["makeblastdb"],"-in",out_dir + "/" + file_type + ".fasta","-dbtype","prot"] )
-	command2 = map(str,[configs["blastp"], "-db",out_dir + "/" + file_type + ".fasta", "-query", out_dir + "/" + file_type + ".fasta","-out",out_dir + "/" + file_type + "_blast_results","-outfmt","6","-evalue",evalue, "-num_threads", cpu])
+	command = map(str,[configs["makeblastdb"],"-in",os.path.join(out_dir, file_type + ".fasta"),"-dbtype","prot"] )
+	command2 = map(str,[configs["blastp"], "-db",os.path.join(out_dir, file_type + ".fasta"), "-query", os.path.join(out_dir,file_type + ".fasta"),"-out",os.path.join(out_dir,file_type + "_blast_results"),"-outfmt","6","-evalue",evalue, "-num_threads", cpu])
 	attempt = 0
 	res = 1 
 	while attempt < utils.MAX_ATTEMPTS and res != 0:
