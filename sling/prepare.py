@@ -10,7 +10,7 @@ import multiprocessing
 import warnings
 import sys
 import signal
-
+import re
 
 class Error (Exception): pass
 
@@ -85,8 +85,6 @@ class Prepare:
 
 				basename = os.path.basename(file)
 				basename = basename.replace(self.args["fasta_suffix"],"")
-
-				
 
 				gff_file = ""
 				if basename in gff_files:
@@ -186,28 +184,30 @@ def get_frame_orfs(args, protein_frame, nuc_frame, i, contig, sixframe_out, orf_
 def check_orf_conditions(args,protein_seq,nuc_seq,strand,contig,sixframe_out,orf_locs_out, genome):	
 
 	for i in range(0,len(args["start_codons"])):
-		res = find_start_codon(args,args["start_codons"][i],protein_seq,nuc_seq,strand, genome)
-		if res != None: # found an ORF with the higher priority codon
+		all_res = find_start_codon(args,args["start_codons"][i],protein_seq,nuc_seq,strand, genome)
+		if all_res != None: # found an ORF with the higher priority codon
 			break
 
-	if res == None: ## no start codon with the permitted start codons
+	if all_res == None: ## no start codon with the permitted start codons
 		return 
 
-	orf = res[0] # the actual ORF
-	strand_symbol = res[1] # strand
-	start = res[2] # start
-	stop = res[3] # stop
-	## give the ORF a name that can later be useful
-	ORF_name = "sixframe|Strain:" + args["strain"] + "|ORF:" +str(args["orf_id"]) + "|Contig:"+ str(contig) + "|Strand:"+strand_symbol+"|Start:" + str(start) + "|Stop:" + str(stop)
-	
-	## write the results to the fasta file
-	sixframe_out.write(">" + ORF_name +"\n" + orf + "\n")
+	for res in all_res:
+		orf = res[0] # the actual ORF
+		strand_symbol = res[1] # strand
+		start = res[2] # start
+		stop = res[3] # stop
+		
+		## give the ORF a name that can later be useful
+		ORF_name = "sixframe|Strain:" + args["strain"] + "|ORF:" +str(args["orf_id"]) + "|Contig:"+ str(contig) + "|Strand:"+strand_symbol+"|Start:" + str(start) + "|Stop:" + str(stop)
+		
+		## write the results to the fasta file
+		sixframe_out.write(">" + ORF_name +"\n" + orf + "\n")
 
-	## write the results to the ORF locations file
-	orf_locs_out.write("\t".join([contig,str(start) ,str(stop), ORF_name,"0",strand_symbol,orf]) + "\n")
-	
-	# increase ORF id by one for next ORF
-	args["orf_id"] += 1
+		## write the results to the ORF locations file
+		orf_locs_out.write("\t".join([contig,str(start) ,str(stop), ORF_name,"0",strand_symbol,orf]) + "\n")
+		
+		# increase ORF id by one for next ORF
+		args["orf_id"] += 1
 
 ''' given an ORF, look for a start codon in the candidate ORF '''
 def find_start_codon(args,codon,protein_seq,nuc_seq,strand, genome):
@@ -225,17 +225,17 @@ def find_start_codon(args,codon,protein_seq,nuc_seq,strand, genome):
 			nuc_seq = reverse_complement(nuc_seq)
 			strand_symbol = "-"
 		
-		start = genome.find(nuc_seq)
-		stop = start + len(nuc_seq) + 1
+		starts = [m.start() for m in re.finditer(nuc_seq, genome)]
+		res = []
+		
+		for start in starts:
+			start = genome.find(nuc_seq) + 1
+			stop = start + len(nuc_seq) - 1
 
-
-		if strand > 2:
-			if start>0:
-				start -= 1
-			stop -= 1
-
-		protein_seq = "M" + protein_seq[1:] # always put an M at start of protein sequence
-		return [protein_seq,strand_symbol,start,stop] # return all values
+			protein_seq = "M" + protein_seq[1:] # always put an M at start of protein sequence
+			res.append([protein_seq,strand_symbol, start, stop])
+		
+		return res # return all values
 	
 	# couldn't find ORF
 	return None
