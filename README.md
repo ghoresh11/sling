@@ -5,4 +5,4 @@ For details on how to use SLING, please see the [SLING wiki page](https://github
 
 To cite SLING: 
 
-Horesh G, Harms A, Fino C, Parts L, Gerdes K, Heinz E, et al. SLING: a tool to search for linked genes in bacterial datasets. Nucleic Acids Res. 2018; doi:10.1093/nar/gky738
+Horesh G, Harms A, Fino C, Parts L, Gerdes K, Heinz E, et al. SLING: a tool to search for linked genes in bacterial datasets. Nucleic Acids Res. 2018; [doi:10.1093/nar/gky738](https://doi.org/10.1093/nar/gky738)
