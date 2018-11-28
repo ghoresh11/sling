@@ -1,9 +1,7 @@
 import utils
-import glob, os
+import os
 import pandas
 import sys
-import multiprocessing 
-import math
 
 class Error (Exception): pass
 
@@ -217,14 +215,18 @@ def parse_orf_locs(args):
 	## files to parse the orf_locs df
 	
 	sixframe_orf_locs_file = os.path.join(args["out_dir"],args["prep_id"]+"_PREPARE",args["basename"] + ".sixframe.bed")
+	
 	args["orf_locs"] = pandas.read_table(sixframe_orf_locs_file,header=None)
 
 	annotated_orf_locs_file = os.path.join(args["out_dir"],args["prep_id"]+"_PREPARE",args["basename"] + ".annotated.bed")
 	
 	## if there's an annotation file, add it
 	if os.path.isfile(annotated_orf_locs_file):
-		args["orf_locs"] = pandas.concat([args["orf_locs"],pandas.read_table(annotated_orf_locs_file ,header=None)],
+		try:
+			args["orf_locs"] = pandas.concat([args["orf_locs"],pandas.read_table(annotated_orf_locs_file ,header=None)],
                      ignore_index=True)
+		except:
+			return
 
 
 

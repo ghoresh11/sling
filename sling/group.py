@@ -1,7 +1,6 @@
 import utils
 import run_blast
 import group_operons
-import sys
 import os
 import subprocess
 
@@ -18,7 +17,9 @@ class Group:
 		save_to_ITOL = False,
 		sep = ",",
 		report_unfit = False,
-		cpu = 2):
+		cpu = 2,
+		makeblastdb = "makeblastdb",
+		blastp = "blastp"):
 
 		self.req = req
 		self.order = order
@@ -38,17 +39,19 @@ class Group:
 			self.order = utils.get_order(self.req,data_env)
 
 		## get blast versions
-		self.blastp = self._get_blast_version("blastp")
-		self.makeblastdb = self._get_blast_version("makeblastdb")
+		self.blastp = blastp
+		self.makeblastdb = makeblastdb
+		self._get_blast_version(blastp)
+		self._get_blast_version(makeblastdb)
 
 		utils.assure_path_exists(os.path.join(self.out_dir,group_id+ "_GROUP"))
 		utils.write_log(os.path.join(self.out_dir,group_id + "_GROUP", "LOG"), "STEP 4 : GROUP ORFs", vars(self), "")
 
 	
 	## quick function to get the versions of BLAST used for log files
-	def _get_blast_version(self,command):
-		configs = utils.load_config_file()
-		p = subprocess.Popen([configs[command], "-h"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	def _get_blast_version(self, command):
+		
+		p = subprocess.Popen([command, "-h"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		output, err = p.communicate(b"input data that is passed to subprocess' stdin")
 		rc = p.returncode
 		output = output.split()
@@ -60,11 +63,10 @@ class Group:
 		return ("BLAST version not found\n")
 
 	def run(self):
-		
-
 
 		blast = run_blast.RunBlast(self.order,self.filter_id, self.group_id, out_dir = self.out_dir, 
-			min_blast_evalue = self.min_blast_evalue, sep = self.sep, report_unfit = self.report_unfit, cpu = self.cpu)
+			min_blast_evalue = self.min_blast_evalue, sep = self.sep, report_unfit = self.report_unfit, cpu = self.cpu, 
+			makeblastdb = self.makeblastdb, blastp = self.blastp)
 		blast.run()
 		group = group_operons.GroupHits(self.order,self.filter_id, self.group_id,
 			out_dir = self.out_dir,

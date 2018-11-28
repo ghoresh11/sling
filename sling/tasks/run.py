@@ -2,7 +2,6 @@
 
 import argparse
 import sling
-import os
 
 def run():
     parser = argparse.ArgumentParser(
@@ -18,6 +17,10 @@ def run():
     parser.add_argument('-sc','--start_codons', type=str, help='Accepted start codons written in hierarchical order of usage [%(default)s]', default="atg,gtg,ttg", metavar='STR')
     parser.add_argument('-o','--out_dir', help='Directory for all the output files', metavar="PATH",default=".")
     
+    ## SCAN
+    parser.add_argument('--hmmsearch', help='HMM search executable (set to hmmscan if wish to run scan not search) [Default: hmmsearch]', metavar="STR",default="hmmsearch")
+    parser.add_argument('--hmmpress', help='HMM press executable [relevant for hmmscan only] [Default: hmmpress]', metavar="STR",default="hmmpress")
+
     ## FILTER
     parser.add_argument('-u','--report_unfit', action='store_true', help='Generate reports for HMMER hits that did not meet requirements  [%(default)s]', default=False)
     parser.add_argument('-mhl','--min_hit_length', type=int, help='Minimum length of a hit, if not in DOMAINS file [1]', metavar='INT', default=None)
@@ -39,6 +42,8 @@ def run():
     parser.add_argument('-it','--save_to_ITOL', action='store_true', help='Generate files that can be loaded into ITOL [%(default)s]', default=False)
     parser.add_argument('-mbe','--min_blast_evalue', type=float, help='Minimum BLAST evalue to use for an edge in the sequence similarity network [%(default)s]', metavar='INT', default=0.01)
     parser.add_argument('-mi','--min_identity', type=int, help='Minimum BLAST identity to use for an edge in the sequence similarity network [%(default)s]', metavar='INT', default=30)
+    parser.add_argument('--makeblastdb', type=str, help='makeblastdb executable [%(default)s]', default="makeblastdb", metavar='STR')
+    parser.add_argument('--blastp', type=str, help='blastp executable [%(default)s]', default="blastp", metavar='STR')
 
     ## Required
     parser.add_argument('run_id', type=str, help='Directory to save all result files', metavar='PATH')
@@ -65,6 +70,8 @@ def run():
         options.run_id,
         options.run_id,
         options.hmm_db,
+        hmmsearch = options.hmmsearch,
+        hmmpress = options.hmmpress,
         out_dir = options.out_dir,
         cpu = options.cpu,     
     )
@@ -102,7 +109,9 @@ def run():
         save_to_ITOL = options.save_to_ITOL,
         sep = options.sep,
         report_unfit = options.report_unfit,
-        cpu = options.cpu)
+        cpu = options.cpu,
+        makeblastdb = options.makeblastdb,
+        blastp = options.blastp)
     group.run()
 
 

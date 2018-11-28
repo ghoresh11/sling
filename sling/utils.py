@@ -1,5 +1,4 @@
 import os
-import sys
 from sling import __version__ 
 import datetime
 
@@ -33,16 +32,6 @@ def get_order(req,data_env):
 			key, val = line.strip().split()
 			if key == "order":
 				return val
-
-def load_config_file():
-	config_file = os.path.join(os.path.abspath(os.path.dirname(__file__)),"CONFIG")
-	configs = {}
-	with open(config_file) as f:
-		for line in f:
-			line = line.strip().split()
-			configs[line[0]] = line[1]
-	return configs
-
 
 def write_log(log_file_path, title, params, other):
 	log_file = open(log_file_path,"w")

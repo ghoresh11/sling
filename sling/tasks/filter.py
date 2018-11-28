@@ -1,6 +1,5 @@
 import argparse
 import sling
-import os
 
 def run():
     

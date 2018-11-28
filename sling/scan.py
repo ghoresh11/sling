@@ -3,8 +3,6 @@ import os
 import utils
 import subprocess
 import sys
-import math
-import signal
 
 
 class Error (Exception): pass
@@ -15,6 +13,8 @@ class Scan:
 		prep_id,
 		scan_id,
 		hmm_db, 
+		hmmsearch = "hmmsearch",
+		hmmpress = "hmmpress",
 		out_dir = ".",
 		cpu = 2):
 
@@ -22,7 +22,8 @@ class Scan:
 		"scan_dir" : os.path.join(os.path.abspath(out_dir),scan_id + "_SCAN") ,
 		"cpu" : cpu,
 		"hmm_db" : hmm_db,
-		"configs" : utils.load_config_file() ,
+		"hmmsearch": hmmsearch,
+		"hmmpress": hmmpress,
 		"prep_id": prep_id,
 		"scan_id": scan_id}
 
@@ -31,12 +32,14 @@ class Scan:
 		if not os.path.isfile(self.args["hmm_db"]):
 			sys.exit("Error: could not find HMM file: [" + self.args["hmm_db"] + "]") 
 		self.args["hmm_db"] = os.path.abspath(self.args["hmm_db"])
-		res = subprocess.call([self.args["configs"]["hmmpress"],self.args["hmm_db"]])
+
+		res = subprocess.call([self.args["hmmpress"], self.args["hmm_db"]])
 
 
 
-	def _get_hmmer_version(self,command):
-		p = subprocess.Popen([self.args["configs"][command], "-h"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	def _get_hmmer_version(self, command):
+		
+		p = subprocess.Popen([self.args[command], "-h"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		output, err = p.communicate(b"input data that is passed to subprocess' stdin")
 		rc = p.returncode
 		output = output.split()
@@ -53,6 +56,7 @@ class Scan:
 
 		if self.args["hmm_db"] not in utils.databases:
 			self._run_hmmpress()
+		
 		else:## before starting, copy the data directory to the out direcotry
 			d = os.path.abspath(os.path.dirname(__file__))
 			data_env = os.path.join(d, 'data/')
@@ -66,8 +70,8 @@ class Scan:
 
 		
 		## get version of hmmscan for log file
-		log_other =  self._get_hmmer_version("hmmscan")
-		log_other = log_other + self._get_hmmer_version("hmmpress")
+		log_other =  self._get_hmmer_version(self.args["hmmsearch"])
+		log_other = log_other + self._get_hmmer_version(self.args["hmmpress"])
 		log_other = log_other + "###   INPUT   ### \ncnt\tgenome\tfasta_file\tgff_file\n" # keeping a text file of all the genomes used
 
 		jobs = []
@@ -80,12 +84,12 @@ class Scan:
 				sixframe_file = os.path.join(self.args["prep_dir"], basename + ".sixframe.fasta")
 				annotated_file = os.path.join(self.args["prep_dir"], basename + ".annotated.fasta")
 
-				scan_genome = {"basename" :basename, "source": "sixframe", "fasta_file": sixframe_file, "out_dir": self.args["scan_dir"], "hmm_db": self.args["hmm_db"], "hmmscan": self.args["configs"]["hmmscan"]}
+				scan_genome = {"basename" :basename, "source": "sixframe", "fasta_file": sixframe_file, "out_dir": self.args["scan_dir"], "hmm_db": self.args["hmm_db"], "hmmsearch": self.args["hmmsearch"]}
 				jobs.append(scan_genome)
 
 
 				if os.path.isfile(annotated_file):
-					scan_genome = {"basename" :basename, "source": "annotated", "fasta_file": annotated_file, "out_dir": self.args["scan_dir"], "hmm_db": self.args["hmm_db"], "hmmscan": self.args["configs"]["hmmscan"]}
+					scan_genome = {"basename" :basename, "source": "annotated", "fasta_file": annotated_file, "out_dir": self.args["scan_dir"], "hmm_db": self.args["hmm_db"], "hmmsearch": self.args["hmmsearch"]}
 					jobs.append(scan_genome)
 					log_other = log_other + str(cnt) +"\t" + basename +"\t"+ sixframe_file +"\t"+ annotated_file+"\n"
 				else:
@@ -94,33 +98,23 @@ class Scan:
 
 
 		utils.write_log(os.path.join(self.args["scan_dir"], "LOG"), "STEP 2 : GENOME SCANNING", self.args, log_other)
+		
 
-		## Allocated CPUs in an efficient way
-		CPUs_per_scan = 5
-		
-		
-		## if there are more CPUs than jobs, or we have less than 5 CPUs, don't use multiprocessing, just give 
-		## the maximum number of CPUs to each hmmscan call
-		if self.args["cpu"] > len(jobs) or self.args["cpu"] < CPUs_per_scan:
-			pool_size = 1
-			CPUs_per_scan = self.args["cpu"]
-		## otherwise, create pool of size CPUS/5, and each scan will run on 5 CPUs (what to do with CPUs I lose?)
+		pool = multiprocessing.Pool(self.args["cpu"]) 
+
+		try:
+			results = pool.map_async(run_scan,tuple(jobs))
+			results.get(120000)
+		except KeyboardInterrupt as e:
+			pool.terminate()
+			sys.exit("Terminated by user")
 		else:
-			pool_size =  self.args["cpu"] / CPUs_per_scan 
-
-		for j in jobs:
-			j["scan_cpu"] = CPUs_per_scan
-		
-
-
-		pool = multiprocessing.Pool(processes = pool_size)
-		results = pool.map_async(run_scan,tuple(jobs))
-		pool.close()
+			pool.close()
 		pool.join()
 
 
 def run_scan(args):
-	command = map(str,[args["hmmscan"],"--cpu",args["scan_cpu"],"--max","--noali","--domtblout",
+	command = map(str,[args["hmmsearch"],"--cpu", "1", "--max", "--noali", "--domtblout",
 		os.path.join(args["out_dir"] , args["basename"] + "." + args["source"] + ".result"), args["hmm_db"], args["fasta_file"]])
 
 	res = 1 
@@ -128,7 +122,7 @@ def run_scan(args):
 	while attempt < utils.MAX_ATTEMPTS and res != 0:
 		res = subprocess.call(command)
 	if res != 0:
-		sys.exit("Error: Failed to complete hmmscan for [" + self.basename + "_" + self.source +"]. Please check log files.")
+		sys.exit("Error: Failed to complete hmmsearch for [" + self.basename + "_" + self.source +"]. Please check log files.")
 
 	return res
 

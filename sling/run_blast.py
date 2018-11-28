@@ -1,16 +1,14 @@
 import utils
-import glob, os
+import os
 import subprocess
 import sys
 import warnings
 
 class Error (Exception): pass
 
-def run_blast(out_dir,file_type,evalue,cpu):	
-	configs = utils.load_config_file()
-	
-	command = map(str,[configs["makeblastdb"],"-in",os.path.join(out_dir, file_type + ".fasta"),"-dbtype","prot"] )
-	command2 = map(str,[configs["blastp"], "-db",os.path.join(out_dir, file_type + ".fasta"), "-query", os.path.join(out_dir,file_type + ".fasta"),"-out",os.path.join(out_dir,file_type + "_blast_results"),"-outfmt","6","-evalue",evalue, "-num_threads", cpu])
+def run_blast(out_dir, file_type, evalue, cpu, makeblastdb, blastp):	
+	command = map(str,[makeblastdb, "-in",os.path.join(out_dir, file_type + ".fasta"),"-dbtype","prot"] )
+	command2 = map(str,[blastp, "-db",os.path.join(out_dir, file_type + ".fasta"), "-query", os.path.join(out_dir,file_type + ".fasta"),"-out",os.path.join(out_dir,file_type + "_blast_results"),"-outfmt","6","-evalue",evalue, "-num_threads", cpu])
 	attempt = 0
 	res = 1 
 	while attempt < utils.MAX_ATTEMPTS and res != 0:
@@ -33,7 +31,9 @@ class RunBlast:
 		min_blast_evalue = 0.01,
 		sep = ",",
 		report_unfit = False,
-		cpu = 2):
+		cpu = 2, 
+		makeblastdb = makeblastdb, 
+		blastp = blastp):
 		
 		self.results_dir = os.path.join(out_dir,filter_id + "_FILTER")
 		self.out_dir = os.path.join(out_dir,group_id + "_GROUP","blast_files")
@@ -44,6 +44,9 @@ class RunBlast:
 		self.sep = sep
 		self.report_unfit = report_unfit
 		self.cpu = 2
+
+		self.makeblastdb = makeblastdb
+		self.blastp = blastp
 
 
 	def _hits_to_fasta(self): # combine all the hits and write them into a single fasta file to run blast
@@ -122,11 +125,11 @@ class RunBlast:
 		self._hits_to_fasta()
 
 		### run blast in multiple threads
-		run_blast(self.out_dir,"hits",self.min_blast_evalue,self.cpu)
+		run_blast(self.out_dir,"hits",self.min_blast_evalue,self.cpu, self.makeblastdb, self.blastp)
 		
 		if self.order == "both":
-			run_blast(self.out_dir,"upstream",self.min_blast_evalue, self.cpu)
-			run_blast(self.out_dir,"downstream",self.min_blast_evalue, self.cpu)
+			run_blast(self.out_dir,"upstream",self.min_blast_evalue, self.cpu, self.makeblastdb, self.blastp)
+			run_blast(self.out_dir,"downstream",self.min_blast_evalue, self.cpu, self.makeblastdb, self.blastp)
 		else:
-			run_blast(self.out_dir,"partners",self.min_blast_evalue, self.cpu)
+			run_blast(self.out_dir,"partners",self.min_blast_evalue, self.cpu, self.makeblastdb, self.blastp)
 

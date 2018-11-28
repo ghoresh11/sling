@@ -1,7 +1,5 @@
 import argparse
 import sling
-import sys
-import os
 
 def run():
     parser = argparse.ArgumentParser(
@@ -15,6 +13,8 @@ def run():
     parser.add_argument('-c','--cpu', type=int, help='Number of CPUs to use [%(default)s]', default=2, metavar='INT')
     parser.add_argument('-o','--out_dir', type=str, help='Directory for all the output files', metavar="PATH",default=".")
     parser.add_argument('-s','--sep', type=str, help='Seperator for the input and output files, [%(default)s]', default=",", metavar='STR')
+    parser.add_argument('--makeblastdb', type=str, help='makeblastdb executable [%(default)s]', default="makeblastdb", metavar='STR')
+    parser.add_argument('--blastp', type=str, help='blastp executable [%(default)s]', default="blastp", metavar='STR')
     parser.add_argument('filter_id',type=str,  help="ID of filter run", metavar='STR')
     parser.add_argument('group_id',type=str,  help="ID of group run", metavar='STR')
     parser.add_argument('hmm_db', help='Name of the predefined HMM database ' + str(sling.utils.databases) + ' OR path to custom HMM file', metavar='STR/FILE')
@@ -31,5 +31,7 @@ def run():
         save_to_ITOL = options.save_to_ITOL,
         sep = options.sep,
         report_unfit = options.report_unfit,
-        cpu = options.cpu)
+        cpu = options.cpu,
+        makeblastdb = options.makeblastdb,
+        blastp = options.blastp)
     group.run()

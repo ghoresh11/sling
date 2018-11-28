@@ -1,10 +1,9 @@
 import utils
-import glob, os
+import os
 import networkx as nx
 import csv
 import numpy as np
 import pandas
-import math
 
 class Error (Exception): pass
 
