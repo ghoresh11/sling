@@ -32,8 +32,8 @@ class RunBlast:
 		sep = ",",
 		report_unfit = False,
 		cpu = 2, 
-		makeblastdb = makeblastdb, 
-		blastp = blastp):
+		makeblastdb = "makeblastdb", 
+		blastp = "blastp"):
 		
 		self.results_dir = os.path.join(out_dir,filter_id + "_FILTER")
 		self.out_dir = os.path.join(out_dir,group_id + "_GROUP","blast_files")

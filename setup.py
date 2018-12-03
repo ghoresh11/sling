@@ -21,5 +21,7 @@ setup(
         'biopython',
         'pandas',
         'networkx',
+        'dask',
+        'toolz',
 	]
 )

@@ -247,15 +247,19 @@ def parse_hmmer_results(args, source):
 
 			curr_line = line.split()
 
-			if len(curr_line) < 8:
+			if len(curr_line) < 8: ## run hasn't completed
 				continue
 			
-			name = curr_line[3] # orf name
 
-
-
+			name = curr_line[0] # orf name
+			domain_name = curr_line[3]
 			score = float(curr_line[7]) # score of current hit
-			domain_name = curr_line[0]
+
+			## if using hmmsearch, the name is toks[0] and the domain is in curr_line[3]
+			## check this by checking if name starts with source
+			if not name.startswith(source):
+				name = curr_line[3]
+				domain_name = curr_line[0]
 
 			if score < args["min_hmmscan_score"]: # ignore hits with low scores
 				continue

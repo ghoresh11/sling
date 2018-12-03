@@ -3,6 +3,8 @@ import os
 import utils
 import subprocess
 import sys
+from dask import compute, delayed
+import warnings
 
 
 class Error (Exception): pass
@@ -39,7 +41,7 @@ class Scan:
 
 	def _get_hmmer_version(self, command):
 		
-		p = subprocess.Popen([self.args[command], "-h"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		p = subprocess.Popen([command, "-h"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		output, err = p.communicate(b"input data that is passed to subprocess' stdin")
 		rc = p.returncode
 		output = output.split()
@@ -100,17 +102,13 @@ class Scan:
 		utils.write_log(os.path.join(self.args["scan_dir"], "LOG"), "STEP 2 : GENOME SCANNING", self.args, log_other)
 		
 
-		pool = multiprocessing.Pool(self.args["cpu"]) 
-
-		try:
-			results = pool.map_async(run_scan,tuple(jobs))
-			results.get(120000)
-		except KeyboardInterrupt as e:
-			pool.terminate()
-			sys.exit("Terminated by user")
-		else:
-			pool.close()
+		
+		pool = multiprocessing.Pool(self.args["cpu"])
+		results = pool.map_async(run_scan,tuple(jobs)) 
+		pool.close()
 		pool.join()
+		# open new schedular client
+
 
 
 def run_scan(args):
@@ -121,8 +119,10 @@ def run_scan(args):
 	attempt = 0
 	while attempt < utils.MAX_ATTEMPTS and res != 0:
 		res = subprocess.call(command)
+		attempt += 1
+	
 	if res != 0:
-		sys.exit("Error: Failed to complete hmmsearch for [" + self.basename + "_" + self.source +"]. Please check log files.")
-
+		warnings.warn("Warning: Failed to complete hmmsearch for [" + self.basename + "_" + self.source +"]. Please check log files! Continued to next file.")
+		return res
 	return res
 
