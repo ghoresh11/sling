@@ -18,10 +18,8 @@ setup(
     url='https://github.com/ghoresh11/sling/wiki',
     scripts=glob.glob('scripts/*'),
     install_requires=[
-        'biopython',
-        'pandas',
-        'networkx',
-        'dask',
-        'toolz',
+        'biopython<=1.68',
+        'pandas<=0.19.2',
+        'networkx<=1.11',
 	]
 )
