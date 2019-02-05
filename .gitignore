@@ -28,3 +28,6 @@ tutorial/
 figures_tables/
 lengths/
 systems_figures.R
+
+performance_analysis/
+run_tutorial.sh
