@@ -36,7 +36,7 @@ def _get_strain_dict(f):
                 strain_dict[contig][strand][start] = {}
 
             stop = toks[4]
-            strain_dict[contig][strand][start][stop] = toks[-1]
+            strain_dict[contig][strand][start][stop] = toks[0]
     return strain_dict
 
 
