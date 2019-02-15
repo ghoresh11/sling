@@ -1,6 +1,6 @@
 # Helper Scripts
 
-Some helper scripts for parsing through SLING outputs
+Some helper scripts for SLING inputs/outputs
 
 
 ### Convert GFF file with appended FASTA to FASTA format
