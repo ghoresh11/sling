@@ -3,126 +3,113 @@ import os
 import utils
 import subprocess
 import sys
-from dask import compute, delayed
 import warnings
+from shutil import copyfile
 
 
-class Error (Exception): pass
-
-class Scan:
-
-	def __init__(self,
-		prep_id,
-		scan_id,
-		hmm_db, 
-		hmmsearch = "hmmsearch",
-		hmmpress = "hmmpress",
-		out_dir = ".",
-		cpu = 2):
-
-		self.args = {"prep_dir" : os.path.join(os.path.abspath(out_dir),prep_id + "_PREPARE") ,
-		"scan_dir" : os.path.join(os.path.abspath(out_dir),scan_id + "_SCAN") ,
-		"cpu" : cpu,
-		"hmm_db" : hmm_db,
-		"hmmsearch": hmmsearch,
-		"hmmpress": hmmpress,
-		"prep_id": prep_id,
-		"scan_id": scan_id}
+class Error (Exception):
+    pass
 
 
-	def _run_hmmpress(self):
-		if not os.path.isfile(self.args["hmm_db"]):
-			sys.exit("Error: could not find HMM file: [" + self.args["hmm_db"] + "]") 
-		self.args["hmm_db"] = os.path.abspath(self.args["hmm_db"])
+def run_hmmpress(args):
+    ''' run HMM press on new HMM db provided '''
+    args.hmm_db = os.path.abspath(args.hmm_db)
+    if not os.path.isfile(args.hmm_db):
+        sys.exit(
+            "Error: could not find HMM file: [" + args.hmm_db + "]")
+    res = subprocess.call([args.hmmpress, args.hmm_db])
+    return
 
-		res = subprocess.call([self.args["hmmpress"], self.args["hmm_db"]])
+def copy_data(args, scan_dir):
+    ''' if database exists in SLING, copy its content to the
+    current working directory (prevents runtime errors)'''
+    d = os.path.abspath(os.path.dirname(__file__))
+    data_env = os.path.join(d, 'data/')
+    curr_env = os.path.join(scan_dir, "data")
+    utils.assure_path_exists(curr_env)
+
+    for f in os.listdir(data_env):
+        if args.hmm_db in f or "domains" in f:
+            copyfile(os.path.join(data_env, f), os.path.join(curr_env,f))
+
+    args.hmm_db =  os.path.join(scan_dir, 'data', args.hmm_db)
+    return
+
+def get_hmmer_version(command):
+    ''' get the version of the HMMER command '''
+    p = subprocess.Popen([command, "-h"], stdin=subprocess.PIPE,
+                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    output, err = p.communicate(
+        b"input data that is passed to subprocess' stdin")
+    rc = p.returncode
+    output = output.split()
+    for i in range(0, len(output)):
+        if output[i] == "HMMER":
+            return (command + ": HMMER-" + output[i + 1] + "\n")
+    return (command + ": HMMER version not found\n")
+
+def create_jobs_list(args, prep_dir, scan_dir):
+    ''' create a list of scanning jobs for HMMsearch
+    while generating a LOG file in the SCAN directory'''
+    # get version of hmmscan for log file
+    log_other = get_hmmer_version(args.hmmsearch)
+    log_other = log_other + get_hmmer_version(args.hmmpress)
+    # keeping a text file of all the genomes used
+    log_other = log_other + "###   INPUT   ### \ncnt\tgenome\tprep_fasta_file\n"
+
+    jobs = []
+    for f in os.listdir(prep_dir):
+        if f.endswith(".fasta"):
+            basename = os.path.basename(f)
+            basename = basename.replace(".fasta", "")
+            prep_file = os.path.join(prep_dir, f)
+
+            scan_genome = {"basename": basename, "fasta_file": prep_file,
+                           "out_dir": scan_dir, "hmm_db": args.hmm_db, "hmmsearch": args.hmmsearch}
+            jobs.append(scan_genome)
+
+            log_other = log_other + \
+                    str(len(jobs)) + "\t" + basename + "\t" + \
+                    prep_file + "\n"
+
+    utils.write_log(os.path.join(scan_dir, "LOG"), "STEP 2 : GENOME SCANNING", vars(args), log_other)
+    return jobs
+
+def run_hmmer(args):
+    ''' Run one hmmsearch job on a FASTA file '''
+    command = map(str, [args["hmmsearch"], "--cpu", "1", "--max", "--noali", "--domtblout",
+                        os.path.join(args["out_dir"], args["basename"] + ".result"), args["hmm_db"], args["fasta_file"]])
+    res = 1
+    attempt = 0
+    while attempt < utils.MAX_ATTEMPTS and res != 0:
+        res = subprocess.call(command)
+        attempt += 1
+    if res != 0:
+        warnings.warn("Warning: Failed to complete hmmsearch for [" + args["fasta_file"] + "].\
+         Please check log files! Continued to next file.")
+        return res
+    return res
 
 
+def run(args):
+    # create output directory
+    out_dir = os.path.abspath(args.out_dir)
+    prep_dir = os.path.join(out_dir, args.prep_id + "_PREPARE")
+    scan_dir = os.path.join(out_dir, args.scan_id + "_SCAN")
 
-	def _get_hmmer_version(self, command):
-		
-		p = subprocess.Popen([command, "-h"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-		output, err = p.communicate(b"input data that is passed to subprocess' stdin")
-		rc = p.returncode
-		output = output.split()
-		for i in range(0,len(output)):
-			if output[i] == "HMMER":
-				return (command + ": HMMER-" + output[i+1] + "\n")
-		return (command + ": HMMER version not found\n")
+    utils.assure_path_exists(scan_dir) ## create the output directory
 
+    if args.hmm_db not in utils.databases: ## check if the database exists
+        run_hmmpress(args)
+    else:  # before starting, copy the data directory to the out direcotry
+        copy_data(args, scan_dir)
 
-	def run(self):
-		
-		## create output directory
-		utils.assure_path_exists(self.args["scan_dir"])
+    ## create list of jobs for HMMSEARCH
+    jobs = create_jobs_list(args, prep_dir, scan_dir)
 
-		if self.args["hmm_db"] not in utils.databases:
-			self._run_hmmpress()
-		
-		else:## before starting, copy the data directory to the out direcotry
-			d = os.path.abspath(os.path.dirname(__file__))
-			data_env = os.path.join(d, 'data/')
-			os.system("mkdir -p " + os.path.join(self.args["scan_dir"],"data"))
-			## Do both??? -> this seems to choose how to behave arbitrarily
-			os.system("cp -r " + data_env + " " + os.path.join(self.args["scan_dir"]))
-			os.system("cp -r " + data_env + " " + os.path.join(self.args["scan_dir"],"data"))
-			self.args["hmm_db"] = os.path.join(self.args["scan_dir"],'data',self.args["hmm_db"])
-
-		
-
-		
-		## get version of hmmscan for log file
-		log_other =  self._get_hmmer_version(self.args["hmmsearch"])
-		log_other = log_other + self._get_hmmer_version(self.args["hmmpress"])
-		log_other = log_other + "###   INPUT   ### \ncnt\tgenome\tfasta_file\tgff_file\n" # keeping a text file of all the genomes used
-
-		jobs = []
-		cnt = 1
-		for file in os.listdir(self.args["prep_dir"]):
-			if file.endswith(".sixframe.fasta"):
-				basename = os.path.basename(file)
-				basename = basename.replace(".sixframe.fasta","")
-
-				sixframe_file = os.path.join(self.args["prep_dir"], basename + ".sixframe.fasta")
-				annotated_file = os.path.join(self.args["prep_dir"], basename + ".annotated.fasta")
-
-				scan_genome = {"basename" :basename, "source": "sixframe", "fasta_file": sixframe_file, "out_dir": self.args["scan_dir"], "hmm_db": self.args["hmm_db"], "hmmsearch": self.args["hmmsearch"]}
-				jobs.append(scan_genome)
-
-
-				if os.path.isfile(annotated_file):
-					scan_genome = {"basename" :basename, "source": "annotated", "fasta_file": annotated_file, "out_dir": self.args["scan_dir"], "hmm_db": self.args["hmm_db"], "hmmsearch": self.args["hmmsearch"]}
-					jobs.append(scan_genome)
-					log_other = log_other + str(cnt) +"\t" + basename +"\t"+ sixframe_file +"\t"+ annotated_file+"\n"
-				else:
-					log_other = log_other + str(cnt) +"\t" + basename +"\t"+ sixframe_file +"\tnot found\n"
-				cnt += 1
-
-
-		utils.write_log(os.path.join(self.args["scan_dir"], "LOG"), "STEP 2 : GENOME SCANNING", self.args, log_other)
-		
-
-		
-		pool = multiprocessing.Pool(self.args["cpu"])
-		results = pool.map_async(run_scan,tuple(jobs)) 
-		pool.close()
-		pool.join()
-		# open new schedular client
-
-
-
-def run_scan(args):
-	command = map(str,[args["hmmsearch"],"--cpu", "1", "--max", "--noali", "--domtblout",
-		os.path.join(args["out_dir"] , args["basename"] + "." + args["source"] + ".result"), args["hmm_db"], args["fasta_file"]])
-
-	res = 1 
-	attempt = 0
-	while attempt < utils.MAX_ATTEMPTS and res != 0:
-		res = subprocess.call(command)
-		attempt += 1
-	
-	if res != 0:
-		warnings.warn("Warning: Failed to complete hmmsearch for [" + self.basename + "_" + self.source +"]. Please check log files! Continued to next file.")
-		return res
-	return res
-
+    ## run the pool
+    pool = multiprocessing.Pool(args.cpu)
+    results = pool.map_async(run_hmmer, tuple(jobs))
+    pool.close()
+    pool.join()
+    return

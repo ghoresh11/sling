@@ -4,7 +4,7 @@ import sling
 
 
 def run():
-    
+
     parser = argparse.ArgumentParser(
         description = 'Run hmmscan to search for hits in the genome',
         usage = 'sling scan [options] <prep_id> <scan_id> <hmm_db>')
@@ -16,14 +16,7 @@ def run():
     parser.add_argument('scan_id', help='ID of scan run', metavar='STR')
     parser.add_argument('hmm_db', help='Name of the predefined HMM database ' + str(sling.utils.databases) +  ' OR path to custom HMM file', metavar='STR/FILE')
     options = parser.parse_args()
-    
-    scan = sling.scan.Scan(
-            options.prep_id,
-            options.scan_id,
-            options.hmm_db,
-            hmmsearch = options.hmmsearch,
-            hmmpress = options.hmmpress,
-            out_dir = options.out_dir,
-            cpu = options.cpu,     
-        )
-    scan.run()
+
+    sling.scan.run(options)
+
+    return
