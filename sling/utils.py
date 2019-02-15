@@ -1,5 +1,5 @@
 import os
-from sling import __version__ 
+from sling import __version__
 import datetime
 
 # ### get the built-in databases
