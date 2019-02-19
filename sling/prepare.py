@@ -326,7 +326,7 @@ def run(args):
     starts_codons = check_start_codons(args.start_codons)
     # input and output dir
     args.out_dir = os.path.join(os.path.abspath(
-        args.out_dir), args.prep_id + "_PREPARE")
+        args.out_dir), args.id + "_PREPARE")
     assure_path_exists(args.out_dir)
     files = get_all_files(args.gff_dir, args.fasta_dir,
                           args.gff_suffix, args.fasta_suffix)
