@@ -94,8 +94,12 @@ def run_hmmer(args):
 def run(args):
     # create output directory
     out_dir = os.path.abspath(args.out_dir)
+
+    if args.prep_id is None:
+        args.prep_id = args.id
+
     prep_dir = os.path.join(out_dir, args.prep_id + "_PREPARE")
-    scan_dir = os.path.join(out_dir, args.scan_id + "_SCAN")
+    scan_dir = os.path.join(out_dir, args.id + "_SCAN")
 
     utils.assure_path_exists(scan_dir) ## create the output directory
 
