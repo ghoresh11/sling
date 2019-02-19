@@ -1,6 +1,10 @@
 import os
 from sling import __version__
 import datetime
+import multiprocessing
+import signal
+import sys
+
 
 # ### get the built-in databases
 def get_dbs():
@@ -44,3 +48,26 @@ def write_log(log_file_path, title, params, other):
 		log_file.write(p + " : " + str(params[p]) + "\n")
 	log_file.write(other)
 	log_file.close()
+
+
+def run_pool(jobs, args, fun):
+    ''' run the pool of prep workers'''
+    # create input handler for using CTRL+C
+    original_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
+    pool = multiprocessing.Pool(processes=args["cpu"])
+    signal.signal(signal.SIGINT, original_sigint_handler)
+
+    try:
+        results = pool.map_async(fun, tuple(jobs))
+        results.get(120000)
+    except KeyboardInterrupt as e:
+        pool.terminate()
+        sys.exit("Terminated by user")
+    except ValueError as e:
+        pool.terminate()
+        sys.exit(
+            "Error: please check LOG files")
+    else:
+        pool.close()
+    pool.join()
+    return

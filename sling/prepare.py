@@ -6,8 +6,6 @@ import sys
 import os
 from utils import *
 import re
-import multiprocessing
-import signal
 import copy
 
 
@@ -145,32 +143,6 @@ def create_jobs_dict(files, args):
 
     return jobs
 
-
-def run_pool(jobs, args):
-    ''' run the pool of prep workers'''
-    # create input handler for using CTRL+C
-    original_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
-    pool = multiprocessing.Pool(processes=args.cpu)
-    signal.signal(signal.SIGINT, original_sigint_handler)
-
-    try:
-        results = pool.map_async(prepare_one_genome, tuple(jobs))
-        results.get(120000)
-    except KeyboardInterrupt as e:
-        pool.terminate()
-        sys.exit("Terminated by user")
-    except ValueError as e:
-        pool.terminate()
-        sys.exit(
-            "Names of contigs in the GFF file (column 1) must match name of \
-            the descriptors in the FASTA files. If FASTA at the end of GFF, \
-            simply call SLING only with --gff_dir and GFFs will be converted \
-            (see Wiki).")
-    else:
-        pool.close()
-    pool.join()
-
-    return
 
 
 def prepare_one_genome(args):
@@ -347,7 +319,6 @@ def annotated_orf_locs(args, fasta_out, orf_locs_out):
 
 
 def run(args):
-
     if args.gff_dir is None and args.fasta_dir is None:
         sys.exit("Error: please provide either <gff_dir> or <fasta_dir>")
 
@@ -360,6 +331,5 @@ def run(args):
     files = get_all_files(args.gff_dir, args.fasta_dir,
                           args.gff_suffix, args.fasta_suffix)
     jobs = create_jobs_dict(files, args)
-    run_pool(jobs, args)
-
+    run_pool(jobs, vars(args), prepare_one_genome)
     return

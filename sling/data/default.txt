@@ -6,5 +6,5 @@ max_downstream_length 10000000
 min_upstream_length	1
 max_upstream_length	10000000
 max_distance	10000000
-max_overlap	300
+max_overlap	50
 order	either
