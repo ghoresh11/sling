@@ -13,7 +13,7 @@ def run():
     parser.add_argument('-mi','--min_identity', type=int, help='Minimum BLAST identity to use for an edge in the sequence similarity network [%(default)s]', metavar='INT', default=75)
     parser.add_argument('-lc','--length_coverage', type=float, help='Minimum alignment coverage when comparing two sequences [%(default)s]', metavar='FLOAT', default=0.75)
 
-    parser.add_argument('-c','--cpu', type=int, help='Number of CPUs to use [%(default)s]', default=2, metavar='INT')
+    parser.add_argument('-c','--cpu', type=int, help='Number of CPUs to use [%(default)s]', default=8, metavar='INT')
 
     parser.add_argument('-o','--out_dir', type=str, help='Directory for all the output files', metavar="PATH",default=".")
     parser.add_argument('-s','--sep', type=str, help='Seperator for the input and output files, [%(default)s]', default=",", metavar='STR')

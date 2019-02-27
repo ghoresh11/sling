@@ -10,7 +10,7 @@ def run():
     parser.add_argument('--prep_id',type=str, help="ID of prepare run [Default: same as --id]", metavar='STR', default = None)
     parser.add_argument('--scan_id',type=str,  help="ID of scan run [Default: same as --id]", metavar='STR', default = None)
 
-    parser.add_argument('-c','--cpu', type=int, help='Number of CPUs to be used [%(default)s]', default = 1, metavar="INT")
+    parser.add_argument('-c','--cpu', type=int, help='Number of CPUs to be used [%(default)s]', default = 8, metavar="INT")
 
     parser.add_argument('-o','--out_dir', type=str, help='Path to all output files [.]', metavar='PATH',default=".")
     parser.add_argument('-u','--report_unfit', action='store_true', help='Generate reports for HMMER hits that did not meet requirements  [%(default)s]', default=False)

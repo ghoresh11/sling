@@ -9,17 +9,15 @@ def run():
         usage = 'sling run [options] <id> <input_dir> <hmm_db> ')
 
     ## General
-    parser.add_argument('-c','--cpu', type=int, help='Number of CPUs to be used [%(default)s]', default = 1, metavar="INT")
+    parser.add_argument('-c','--cpu', type=int, help='Number of CPUs to be used [%(default)s]', default = 8, metavar="INT")
     parser.add_argument('-o','--out_dir', help='Directory for all the output files', metavar="PATH",default=".")
     parser.add_argument('-u','--report_unfit', action='store_true', help='Generate reports for HMMER hits that did not meet requirements  [%(default)s]', default=False)
     parser.add_argument('-s','--sep', type=str, help='Delimiter to use in the output file [%(default)s]', metavar='PATH', default=",")
     parser.add_argument('-it','--itol', action='store_true', help='Generate files that can be loaded into ITOL [%(default)s]', default=False)
 
-
     ## PREPARE
-    parser.add_argument('-fs','--fasta_suffix', type=str, help='Suffix of FASTA files in <input_dir> [%(default)s]', metavar='STR', default=".fasta")
     parser.add_argument('-gd','--gff_dir', help='Name of directory containing GFF files, if different from <input_dir>', metavar='PATH', default=None)
-    parser.add_argument('-fd', '--fasta_dir', help='Name of directory containing FASTA files  [%(default)s]', metavar='PATH', default=None)
+    parser.add_argument('-fs','--fasta_suffix', type=str, help='Suffix of FASTA files in <input_dir> [%(default)s]', metavar='STR', default=".fasta")
     parser.add_argument('-gs','--gff_suffix', type=str, help='Suffix of GFF files in <gff_dir> [%(default)s] ', metavar='STR', default=".gff")
     parser.add_argument('-mol','--min_orf_length', type=int, help='Minimun length of an open reading frame [%(default)s]', metavar='INT', default=20)
     parser.add_argument('-ct','--codon_table', type=str, help='Codon table to use in translation [%(default)s]', default = "Standard", metavar="STR")
@@ -30,6 +28,7 @@ def run():
     parser.add_argument('--hmmpress', help='HMM press executable [relevant for hmmscan only] [Default: hmmpress]', metavar="STR",default="hmmpress")
 
     ## FILTER
+    parser.add_argument('-t','--order', type=str, help='Location of partner gene relative to hit. Options: upstream, downstream, either, both [either]', metavar='STR', default=None)
     parser.add_argument('-mhl','--min_hit_length', type=int, help='Minimum length of a hit, if not in DOMAINS file [1]', metavar='INT', default=None)
     parser.add_argument('-Mhl','--max_hit_length', type=int, help='Maximum length of a hit, if not in DOMAINS file [10000000]', metavar='INT', default=None)
     parser.add_argument('-mul','--min_upstream_length', type=int, help='Minimum length of the upstream gene [1]', metavar='INT', default=None)
@@ -39,7 +38,6 @@ def run():
     parser.add_argument('-Mo','--max_overlap', type=int, help='Maximum overlap between two operon proteins [300]', metavar='INT', default=None)
     parser.add_argument('-Md','--max_distance', type=int, help='Maximum distance between two opern proteins [10000000]', metavar='INT', default=None)
     parser.add_argument('-mhs','--min_hmmscan_score', type=float, help='Minimum HMMER score to use for significant hits [%(default)s]', default=20, metavar='FLOAT')
-    parser.add_argument('-t','--order', type=str, help='Location of partner gene relative to hit. Options: upstream, downstream, either, both [either]', metavar='STR', default=None)
     parser.add_argument('-di','--domains_to_ignore', type=str, help='File with line delemited hmmer domains to ignore in summary', default = "", metavar="FILE")
     parser.add_argument('-df','--domains_file', type=str, help='Tab delimited file of HMMER domains and the expected length of their hits', metavar='FILE', default="")
     parser.add_argument('-Mda','--max_diff_avg_length', type=int, help='Maximum difference between hit length and its average length defined in <domains_file> [10000000]', metavar='INT', default=None)
