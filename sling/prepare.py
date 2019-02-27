@@ -307,6 +307,9 @@ def annotated_orf_locs(args, fasta_out, orf_locs_out):
 
                 sequence = translate(sequence, table=args["codon_table"])
 
+                if len(sequence) < args["min_orf_length"]: ## don't take short sequences
+                    continue
+
                 # write the results to the fasta file
                 fasta_out.write(">" + orf_name + "\n" + sequence + "\n")
 
