@@ -132,8 +132,9 @@ def parse_hmmer_results(args):
                 prev_name = name
                 curr_orf = args["orf_locs"][args["orf_locs"][3] == name]
                 curr_orf = curr_orf.values.tolist()[0]
-                sequence = curr_orf[6]  # sequence is in the 7th column of BED file
-                length = len(sequence)
+                sequence = curr_orf[6] # sequence is in the 7th column of BED file, in nucleotide sequence
+                length = len(sequence)/3
+
                 # get all the values from the BED file
                 source, contig, strand, start, stop = name.split(
                     "|")[0], curr_orf[0], curr_orf[5], curr_orf[1], curr_orf[2]
@@ -480,15 +481,23 @@ def run(args):
     # define input and output directories
     args.out_dir = os.path.abspath(args.out_dir)
 
-    if args.prep_id is None:
-        args.prep_id = args.id
+    if "prep_id" not in vars(args):
+        prep_id = args.id
+    elif args.prep_id is None:
+        prep_id = args.id
+    else:
+        prep_id = args.prep_id
 
-    if args.scan_id is None:
-        args.scan_id = args.id
+    if "scan_id" not in vars(args):
+        scan_id = args.id
+    elif args.scan_id is None:
+        scan_id = args.id
+    else:
+        scan_id = args.scan_id
 
-    prep_dir = os.path.join(args.out_dir, args.prep_id + "_PREPARE")
-    scan_dir = os.path.join(args.out_dir, args.scan_id + "_SCAN")
-    results_dir = os.path.join(args.out_dir, args.filter_id + "_FILTER")
+    prep_dir = os.path.join(args.out_dir, prep_id + "_PREPARE")
+    scan_dir = os.path.join(args.out_dir, scan_id + "_SCAN")
+    results_dir = os.path.join(args.out_dir, args.id + "_FILTER")
 
     if args.report_unfit:
         args.report_unfit = os.path.join(results_dir, "UNFIT")

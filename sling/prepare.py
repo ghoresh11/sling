@@ -26,7 +26,7 @@ def check_start_codons(start_codons):
         if len(s) != 3 or not re.match("^[acgt]*$", s):
             sys.exit(
                 "Start codons must be of length 3 and contain only the letters a,c,g or t: " + s)
-    return start_codons
+    return
 
 
 def check_basename(f, suffix):
@@ -90,6 +90,8 @@ def get_all_files(input_dir, gff_dir, gff_suffix, fasta_suffix):
     for basename in files:
         print("############## %s  ##############\nFASTA: %s\nGFF: %s\n" %
               (basename, files[basename]["fasta"], files[basename]["gff"]))
+    if len(files) == 0:
+        sys.exit("Could not find any files. Please check <input_dir> and file extensions!")
     return files
 
 
@@ -120,6 +122,7 @@ def create_jobs_dict(files, args):
 
         # convert the args class to a dictionary
         genome_prep = copy.copy(vars(args))
+        genome_prep["start_codons"] = genome_prep["start_codons"].split(",")
 
         # add missing values
         genome_prep["strain"] = basename
@@ -128,6 +131,7 @@ def create_jobs_dict(files, args):
         # arguments required for the preparation step
         genome_prep["orf_id"] = 0
         genome_prep["contigs"] = {}
+
 
         jobs.append(genome_prep)
         log_other += "\t".join(map(str, [len(jobs),
@@ -201,6 +205,7 @@ def get_frame_orfs(args, protein_frame, nuc_frame, i, contig, sixframe_out, orf_
 
 def check_orf_conditions(args, protein_seq, nuc_seq, strand, contig, sixframe_out, orf_locs_out, genome):
     ''' given an ORF, find the relevant start codon and write to file if meets requirements '''
+
     for i in range(0, len(args["start_codons"])):
         all_res = find_start_codon(
             args, args["start_codons"][i], protein_seq, nuc_seq, strand, genome)
@@ -215,6 +220,7 @@ def check_orf_conditions(args, protein_seq, nuc_seq, strand, contig, sixframe_ou
         strand_symbol = res[1]  # strand
         start = res[2]  # start
         stop = res[3]  # stop
+        orf_nuc = res[4]
 
         # give the ORF a name that can later be useful
         ORF_name = "Sixframe|Strain:" + args["strain"] + "|ORF:" + str(args["orf_id"]) + "|Contig:" + str(
@@ -225,7 +231,7 @@ def check_orf_conditions(args, protein_seq, nuc_seq, strand, contig, sixframe_ou
 
         # write the results to the ORF locations file
         orf_locs_out.write("\t".join([contig, str(start), str(
-            stop), ORF_name, "0", strand_symbol, orf]) + "\n")
+            stop), ORF_name, "0", strand_symbol, orf_nuc]) + "\n")
 
         # increase ORF id by one for next ORF
         args["orf_id"] += 1
@@ -237,9 +243,9 @@ def find_start_codon(args, codon, protein_seq, nuc_seq, strand, genome):
     # would return V, M or L depending on the start codon
     aa = translate(codon, args["codon_table"])
     aa_index = protein_seq.find(aa)  # find the relevant aa of the start codon
-
     if aa_index > 0 and len(protein_seq[aa_index:]) >= args["min_orf_length"] and nuc_seq[aa_index * 3:aa_index * 3 + 3] == codon:
         # use M
+
         protein_seq = protein_seq[aa_index:]  # take the ORF from the start
         strand_symbol = "+"
         nuc_seq = nuc_seq[aa_index * 3:]
@@ -248,6 +254,7 @@ def find_start_codon(args, codon, protein_seq, nuc_seq, strand, genome):
             nuc_seq = reverse_complement(nuc_seq)
             strand_symbol = "-"
 
+
         starts = [m.start() for m in re.finditer(nuc_seq, genome)]
         res = []
 
@@ -255,12 +262,20 @@ def find_start_codon(args, codon, protein_seq, nuc_seq, strand, genome):
             start = genome.find(nuc_seq) + 1
             stop = start + len(nuc_seq) - 1
 
+            ## too many Xs or Ns
+            if nuc_seq.count('X') / len(nuc_seq) > 0.05 or nuc_seq.count('N') / len(nuc_seq) > 0.05:
+                print(nuc_seq)
+                continue
+
             # always put an M at start of protein sequence
             protein_seq = "M" + protein_seq[1:]
-            res.append([protein_seq, strand_symbol, start, stop])
+
+            ## remove the ORF if there are too many Xs or Ns
+            res.append([protein_seq, strand_symbol, start, stop, nuc_seq.upper()])
 
         return res  # return all values
     # couldn't find ORF
+
     return None
 
 
@@ -301,17 +316,17 @@ def annotated_orf_locs(args, fasta_out, orf_locs_out):
                 else:
                     sequence = args["contigs"][contig][start - 1:stop - 1]
 
-                sequence = translate(sequence, table=args["codon_table"])
+                prot_sequence = translate(sequence, table=args["codon_table"])
 
-                if len(sequence) < args["min_orf_length"]: ## don't take short sequences
+                if len(prot_sequence) < args["min_orf_length"]: ## don't take short sequences
                     continue
 
                 # write the results to the fasta file
-                fasta_out.write(">" + orf_name + "\n" + sequence + "\n")
+                fasta_out.write(">" + orf_name + "\n" + prot_sequence + "\n")
 
                 # write the results to the ORF locations file
                 orf_locs_out.write("\t".join([contig, str(start), str(
-                    stop), orf_name, "0", strand, sequence]) + "\n")
+                    stop), orf_name, "0", strand, sequence.upper()]) + "\n")
 
                 args["orf_id"] += 1
     return
@@ -319,7 +334,7 @@ def annotated_orf_locs(args, fasta_out, orf_locs_out):
 
 def run(args):
     # check that the start codons are valid
-    starts_codons = check_start_codons(args.start_codons)
+    check_start_codons(args.start_codons)
     # input and output dir
     args.out_dir = os.path.join(os.path.abspath(
         args.out_dir), args.id + "_PREPARE")

@@ -581,11 +581,16 @@ def group_operons(args, group_dir, filter_dir, blast_dir):
 
 
 def run(args):
-    if args.filter_id is None:
-        args.filter_id = args.id
+
+    if "filter_id" not in vars(args):
+        filter_id = args.id
+    elif args.filter_id is None:
+        filter_id = args.id
+    else:
+        filter_id = args.filter_id
 
     args.out_dir = os.path.abspath(args.out_dir)
-    filter_dir = os.path.join(args.out_dir, args.filter_id+ "_FILTER")
+    filter_dir = os.path.join(args.out_dir, filter_id+ "_FILTER")
     group_dir = os.path.join(args.out_dir, args.id+ "_GROUP")
     utils.assure_path_exists(group_dir)
     blast_dir = os.path.join(group_dir,"blast_files")

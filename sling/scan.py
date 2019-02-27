@@ -95,10 +95,14 @@ def run(args):
     # create output directory
     out_dir = os.path.abspath(args.out_dir)
 
-    if args.prep_id is None:
-        args.prep_id = args.id
+    if "prep_id" not in vars(args):
+        prep_id = args.id
+    elif args.prep_id is None:
+        prep_id = args.id
+    else:
+        prep_id = args.prep_id
 
-    prep_dir = os.path.join(out_dir, args.prep_id + "_PREPARE")
+    prep_dir = os.path.join(out_dir, prep_id + "_PREPARE")
     scan_dir = os.path.join(out_dir, args.id + "_SCAN")
 
     utils.assure_path_exists(scan_dir) ## create the output directory
