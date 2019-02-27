@@ -71,3 +71,19 @@ def run_pool(jobs, args, fun):
         pool.close()
     pool.join()
     return
+
+def check_min_max(reqs, min_name, max_name):
+    ''' check that the minimum length required is smaller than maximum'''
+    if reqs[min_name] > reqs[max_name]:
+        sys.exit("Error: %s [%d] must be smaller than %s [%d]." %(min_name,reqs[min_name], max_name, reqs[max_name]))
+    return
+
+def check_reqs(reqs):
+    ''' check that the requirements input is valid'''
+    orders = ["upstream", "downstream", "either", "both"]
+    if reqs["order"] not in orders:
+        sys.exit("Error: order must be one of " + str(orders) + ".")
+    check_min_max(reqs, "min_hit_length", "max_hit_length")
+    check_min_max(reqs, "min_upstream_length", "max_upstream_length")
+    check_min_max(reqs, "min_downstream_length", "max_downstream_length")
+    return

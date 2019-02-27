@@ -19,9 +19,9 @@ def get_requirements(args, data_env):
             key, val = line.strip().split()
             if key != "order":
                 val = int(val)
-            if args[key] is None:
+            if args[key] is None: # otherwise, keep what the user gave
                 args[key] = val
-            # otherwise, keep what the user gave
+    utils.check_reqs(args)
     return
 
 
