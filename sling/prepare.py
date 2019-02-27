@@ -56,38 +56,34 @@ def convert_gff_to_fasta(gff_file, fasta_file):
     return
 
 
-def generate_missing_fastas(files, fasta_dir, fasta_suffix):
+def generate_missing_fastas(files, input_dir, fasta_suffix):
     ''' every FASTA file that isn't found, generate it from the GFF file'''
     for basename in files:
         if files[basename]["fasta"] == "Not found":
             out_fasta = os.path.abspath(os.path.join(
-                fasta_dir, basename + fasta_suffix))
+                input_dir, basename + fasta_suffix))
             convert_gff_to_fasta(files[basename]["gff"], out_fasta)
             files[basename]["fasta"] = out_fasta
     return
 
 
-def get_all_files(gff_dir, fasta_dir, gff_suffix, fasta_suffix):
+def get_all_files(input_dir, gff_dir, gff_suffix, fasta_suffix):
     ''' read all the files into a dictionary contaning:
     basename -> "gff": location of gff , "fasta" : location of fasta'''
     files = {}
 
     ''' generate a list of all the GFF files'''
     if gff_dir is None:
-        gff_dir = fasta_dir
+        gff_dir = input_dir
     else:
         gff_dir = gff_dir
 
-    # get all the GFF files
+    # get all the GFF and FASTA files
     get_file_from_dir(files, gff_dir, gff_suffix, "gff")
-
-    if fasta_dir is not None:  # if a FASTA file is given, get all the FASTA files
-        get_file_from_dir(files, fasta_dir, fasta_suffix, "fasta")
-    else:
-        fasta_dir = os.path.join(gff_dir)
+    get_file_from_dir(files, input_dir, fasta_suffix, "fasta")
 
     # go over all the files -> if a FASTA file is missing generate it
-    generate_missing_fastas(files, fasta_dir, fasta_suffix)
+    generate_missing_fastas(files, input_dir, fasta_suffix)
 
     # tell the user exactly what files it's running on
     print("Running preparation step on files: ")
@@ -322,16 +318,13 @@ def annotated_orf_locs(args, fasta_out, orf_locs_out):
 
 
 def run(args):
-    if args.gff_dir is None and args.fasta_dir is None:
-        sys.exit("Error: please provide either <gff_dir> or <fasta_dir>")
-
     # check that the start codons are valid
     starts_codons = check_start_codons(args.start_codons)
     # input and output dir
     args.out_dir = os.path.join(os.path.abspath(
         args.out_dir), args.id + "_PREPARE")
     assure_path_exists(args.out_dir)
-    files = get_all_files(args.gff_dir, args.fasta_dir,
+    files = get_all_files(args.input_dir, args.gff_dir,
                           args.gff_suffix, args.fasta_suffix)
     jobs = create_jobs_dict(files, args)
     run_pool(jobs, vars(args), prepare_one_genome)
