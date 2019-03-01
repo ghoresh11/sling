@@ -478,6 +478,7 @@ def run_summarise(args):
 
 
 def run(args):
+    args = copy.deepcopy(args)
     # define input and output directories
     args.out_dir = os.path.abspath(args.out_dir)
 

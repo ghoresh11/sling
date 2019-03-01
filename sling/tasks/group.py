@@ -5,6 +5,9 @@ def run():
     parser = argparse.ArgumentParser(
         description = 'Group the operons based on sequence similarity',
         usage = 'sling group [options] <id> <hmm_db>')
+
+    parser.add_argument('--filter_id',type=str,  help="ID of filter run [default: same as <id>]", metavar='STR')
+        
     parser.add_argument('-it','--itol', action='store_true', help='Generate files that can be loaded into ITOL [%(default)s]', default=False)
     parser.add_argument('-t','--order', type=str, help = 'Location of partner gene relative to hit if overriding <req_file>. Options: upstream, downstream, either, both [either]', metavar='STR', default=None)
     parser.add_argument('-u','--report_unfit', action='store_true', help='Generate outputs for HMMER hits that did not meet requirements  [%(default)s]', default=False)
@@ -20,8 +23,6 @@ def run():
 
     parser.add_argument('--makeblastdb', type=str, help='makeblastdb executable [%(default)s]', default="makeblastdb", metavar='STR')
     parser.add_argument('--blastp', type=str, help='blastp executable [%(default)s]', default="blastp", metavar='STR')
-
-    parser.add_argument('--filter_id',type=str,  help="ID of filter run [default: same as <id>]", metavar='STR')
 
     parser.add_argument('id',type=str,  help="ID of group run [default: same as <id>]", metavar='STR')
     parser.add_argument('hmm_db', help='Name of the predefined HMM database ' + str(sling.utils.databases) + ' OR path to custom HMM file', metavar='STR/FILE')

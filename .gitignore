@@ -1,6 +1,7 @@
 
 performance_analysis/
 run_tutorial.sh
+run_tests.py
 
 # Compiled python modules.
 *.pyc

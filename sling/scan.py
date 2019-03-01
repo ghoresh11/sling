@@ -5,7 +5,7 @@ import subprocess
 import sys
 import warnings
 from shutil import copyfile
-
+import copy
 
 class Error (Exception):
     pass
@@ -92,6 +92,7 @@ def run_hmmer(args):
 
 
 def run(args):
+    args = copy.deepcopy(args)
     # create output directory
     out_dir = os.path.abspath(args.out_dir)
 
@@ -103,6 +104,7 @@ def run(args):
         prep_id = args.prep_id
 
     prep_dir = os.path.join(out_dir, prep_id + "_PREPARE")
+
     scan_dir = os.path.join(out_dir, args.id + "_SCAN")
 
     utils.assure_path_exists(scan_dir) ## create the output directory
@@ -114,7 +116,6 @@ def run(args):
 
     ## create list of jobs for HMMSEARCH
     jobs = create_jobs_list(args, prep_dir, scan_dir)
-
     ## run the pool
     pool = multiprocessing.Pool(args.cpu)
     results = pool.map_async(run_hmmer, tuple(jobs))

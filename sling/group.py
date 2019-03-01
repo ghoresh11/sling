@@ -6,6 +6,9 @@ import networkx as nx
 import csv
 import sys
 import numpy as np
+import copy
+from Bio.Seq import translate
+
 
 class Error (Exception):
     pass
@@ -54,16 +57,16 @@ def hits_to_fasta(args, out_dir, filter_dir):
                 line_num += 1
                 identifier = ">" + strain + "|" + str(line_num)
                 ## hits always exist
-                hits.write(identifier + "*hit" + "\n" + toks[hit_index] + "\n")
+                hits.write(identifier + "*hit" + "\n" + translate(toks[hit_index]) + "\n")
 
                 if args.order == "both": ## with "both" there are 2 output files
-                    upstream.write(identifier +"*upstream"+ "\n" + toks[upstream_index] + "\n")
-                    downstream.write(identifier + "*downstream" + "\n" + toks[downstream_index] + "\n")
+                    upstream.write(identifier +"*upstream"+ "\n" + translate(toks[upstream_index]) + "\n")
+                    downstream.write(identifier + "*downstream" + "\n" + translate(toks[downstream_index]) + "\n")
                 else:  ## otherwise, write them if found
                     if upstream_index > 0 and toks[upstream_index] != "-":
-                        partners.write(identifier +"*upstream"+ "\n" + toks[upstream_index] + "\n")
+                        partners.write(identifier +"*upstream"+ "\n" + translate(toks[upstream_index]) + "\n")
                     if downstream_index > 0 and toks[downstream_index] != "-":
-                        partners.write(identifier +"*downstream"+ "\n" + toks[downstream_index] + "\n")
+                        partners.write(identifier +"*downstream"+ "\n" + translate(toks[downstream_index]) + "\n")
 
     #### UNFIT ####
     ## if in the previous step, the unfit were also reported, add them to the "hits" in the network analysis
@@ -301,6 +304,11 @@ def read_blast_to_network(args, network_type, blast_dir):
             node_type_2 = id2.split("*")[1]
             if is_blast_match(toks, args) and node_type_1 != "unfit" and node_type_2 != "unfit": # only add hits to the network
                 G.add_edge(id1,id2)
+            ## don't forget to add nodes that are disconnected from all the rest
+            elif node_type_1 != "unfit":
+                G.add_node(id1)
+            elif node_type2 != "unfit":
+                G.add_node(id2)
     return G
 
 
@@ -313,7 +321,7 @@ def write_single_output(args, network_type, keys, hits, group_dir, label, curr_n
 
     ### Attributes of this cluster ####
     outfile.write("#  ID: " + label + "\n")
-    outfile.write("#  Num_Strains: " + str(num_copies) + "\n")
+    outfile.write("#  Num copies: " + str(num_copies) + "\n")
     outfile.write("#  Domains: " + ",".join(domains)+ "\n")
     outfile.write("#  Average Hit Length: " +str(np.mean(toxins_lengths))+ "\n")
     outfile.write("#  Average HMMER score: " + str(np.mean(scores)) + "\n")
@@ -581,7 +589,7 @@ def group_operons(args, group_dir, filter_dir, blast_dir):
 
 
 def run(args):
-
+    args = copy.deepcopy(args)
     if "filter_id" not in vars(args):
         filter_id = args.id
     elif args.filter_id is None:

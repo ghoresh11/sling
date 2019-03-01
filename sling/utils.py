@@ -38,16 +38,18 @@ def get_order(req,data_env):
 				return val
 
 def write_log(log_file_path, title, params, other):
-	log_file = open(log_file_path,"w")
-	log_file.write("########## SLING  ########## \n")
-	log_file.write("##########"  + title +  "########## \n")
-	log_file.write(" SLING version: " + str(__version__))
-	log_file.write("\nTime : {:%Y-%m-%d %H:%M:%S}".format(datetime.datetime.now()))
-	log_file.write("\n### PARAMS ###\n")
-	for p in params:
-		log_file.write(p + " : " + str(params[p]) + "\n")
-	log_file.write(other)
-	log_file.close()
+    log_file = open(log_file_path,"w")
+    log_file.write("########## SLING  ########## \n")
+    log_file.write("##########"  + title +  "########## \n")
+    log_file.write(" SLING version: " + str(__version__))
+    log_file.write("\nTime : {:%Y-%m-%d %H:%M:%S}".format(datetime.datetime.now()))
+    log_file.write("\n### PARAMS ###\n")
+    for p in params:
+        if params[p] in None: ## this parameter wasn't used in this run
+            continue
+        log_file.write(p + " : " + str(params[p]) + "\n")
+        log_file.write(other)
+    log_file.close()
 
 
 def run_pool(jobs, args, fun):

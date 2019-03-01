@@ -8,7 +8,6 @@ from utils import *
 import re
 import copy
 
-
 class Error (Exception):
     pass
 
@@ -254,7 +253,6 @@ def find_start_codon(args, codon, protein_seq, nuc_seq, strand, genome):
             nuc_seq = reverse_complement(nuc_seq)
             strand_symbol = "-"
 
-
         starts = [m.start() for m in re.finditer(nuc_seq, genome)]
         res = []
 
@@ -264,14 +262,17 @@ def find_start_codon(args, codon, protein_seq, nuc_seq, strand, genome):
 
             ## too many Xs or Ns
             if nuc_seq.count('X') / len(nuc_seq) > 0.05 or nuc_seq.count('N') / len(nuc_seq) > 0.05:
-                print(nuc_seq)
                 continue
 
             # always put an M at start of protein sequence
             protein_seq = "M" + protein_seq[1:]
 
-            ## remove the ORF if there are too many Xs or Ns
-            res.append([protein_seq, strand_symbol, start, stop, nuc_seq.upper()])
+            ## for - strand, return reverse of protein
+            out_nuc = nuc_seq.upper()
+            if strand > 2:
+                out_nuc = reverse_complement(out_nuc)
+
+            res.append([protein_seq, strand_symbol, start, stop, out_nuc])
 
         return res  # return all values
     # couldn't find ORF
@@ -333,6 +334,7 @@ def annotated_orf_locs(args, fasta_out, orf_locs_out):
 
 
 def run(args):
+    args = copy.deepcopy(args)
     # check that the start codons are valid
     check_start_codons(args.start_codons)
     # input and output dir
