@@ -44,20 +44,26 @@ def hits_to_fasta(args, out_dir, filter_dir):
 
         strain = os.path.basename(file)
         strain = strain.replace(".csv","")
+        sequences_written = 0
 
         with open(os.path.join(filter_dir,file)) as f:
             line_num = 0
+            upstream_index = -1
+            downstream_index = -1
             for line in f:
                 toks = line.strip().split(args.sep)
                 if line.startswith("Domain"):
                     hit_index = toks.index("Hit")
-                    upstream_index = toks.index("Upstream")
-                    downstream_index = toks.index("Downstream")
+                    if "Upstream" in toks:
+                        upstream_index = toks.index("Upstream")
+                    if "Downstream" in toks:
+                        downstream_index = toks.index("Downstream")
                     continue
                 line_num += 1
                 identifier = ">" + strain + "|" + str(line_num)
                 ## hits always exist
                 hits.write(identifier + "*hit" + "\n" + translate(toks[hit_index]) + "\n")
+                sequences_written += 1
 
                 if args.order == "both": ## with "both" there are 2 output files
                     upstream.write(identifier +"*upstream"+ "\n" + translate(toks[upstream_index]) + "\n")
@@ -69,6 +75,7 @@ def hits_to_fasta(args, out_dir, filter_dir):
                         partners.write(identifier +"*downstream"+ "\n" + translate(toks[downstream_index]) + "\n")
 
     #### UNFIT ####
+    unfit_sequences_written = 0
     ## if in the previous step, the unfit were also reported, add them to the "hits" in the network analysis
     if args.report_unfit and not os.path.exists(os.path.join(filter_dir,"UNFIT")):
         warnings.warn("Could not find UNFIT files from SUMMARISE step. To report unfit, turn on --report_unfit / -u flag in FILTER and run again.")
@@ -89,6 +96,7 @@ def hits_to_fasta(args, out_dir, filter_dir):
                     strain = strain
                     identifier = ">" + strain + "|" + str(line_num) + "*unfit"
                     hits.write(identifier + "\n" + toks[hit_index] + "\n")
+                    unfit_sequences_written = 0
     ## close all the files
     hits.close()
     if args.order == "both":
@@ -96,6 +104,11 @@ def hits_to_fasta(args, out_dir, filter_dir):
         downstream.close()
     else:
         partners.close()
+
+    ## didn't write any sequences out
+    if sequences_written == 0:
+        warnings.warn("\n\nNo hits were found in the filtering step (Please look at FILTER directory). Quitting grouping.\n\n")
+        quit()
     return
 
 def call_blast_command(args, out_dir, file_type,):
@@ -307,7 +320,7 @@ def read_blast_to_network(args, network_type, blast_dir):
             ## don't forget to add nodes that are disconnected from all the rest
             elif node_type_1 != "unfit":
                 G.add_node(id1)
-            elif node_type2 != "unfit":
+            elif node_type_2 != "unfit":
                 G.add_node(id2)
     return G
 
@@ -550,6 +563,7 @@ def report_unfit(args, group_dir, filter_dir, blast_dir, hits, strains):
     unfits_graph = create_unfits_network(args, unfits, hits, blast_dir)
 
     unfit_components, unfit_matrix = convert_graph_to_matrix(args, unfits_graph, "unfit", strains, unfits)
+    write_matrix_to_file(args, group_dir, "unfit", unfit_matrix)
     write_file_per_cluster(args, group_dir, keys, unfits, unfit_components, "unfit")
     return
 

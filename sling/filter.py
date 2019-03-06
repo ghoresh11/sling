@@ -454,9 +454,7 @@ def report_unfit(args):
     discarded because they did not meet the structural requirements'''
     if not args["report_unfit"]: ## user didn't request to report unfit
         return
-
     merge_unfit(args)
-    utils.assure_path_exists(os.path.dirname(args["report_unfit"]))
     report = open(args["report_unfit"],"w")
     report.write(args["sep"].join(["Domain","HMMER_score","Contig","Strand","Hit_length","Hit_start","Hit_stop","Sequence","Reasons"])+ "\n")
 
@@ -468,7 +466,7 @@ def report_unfit(args):
 
 def run_summarise(args):
     # read in the ORF locs file
-    args["orf_locs"] = pandas.read_table(args["orf_locs"], header = None)
+    args["orf_locs"] = pandas.read_csv(args["orf_locs"], header = None, sep = "\t")
     parse_hmmer_results(args)
     find_candidate_antitoxins(args)
     merge_hits(args)
@@ -502,6 +500,7 @@ def run(args):
 
     if args.report_unfit:
         args.report_unfit = os.path.join(results_dir, "UNFIT")
+        utils.assure_path_exists(args.report_unfit)
 
     # create the results directory
     utils.assure_path_exists(results_dir)

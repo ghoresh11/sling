@@ -8,7 +8,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='sling',
-    version='1.2.0',
+    version='2.0.0',
     description='sling: a tool to search for linked gene arrays in bacterial datasets',
     packages = find_packages(),
     package_data={'sling': ['data/*']},
@@ -18,10 +18,8 @@ setup(
     url='https://github.com/ghoresh11/sling/wiki',
     scripts=glob.glob('scripts/*'),
     install_requires=[
-        'biopython',
-        'pandas',
-        'networkx',
-        'dask',
-        'toolz',
+        'biopython == 1.73',
+        'pandas == 0.23',
+        'networkx == 2.2',
 	]
 )
