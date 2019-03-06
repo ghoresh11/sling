@@ -6,137 +6,72 @@ from shutil import copyfile
 
 class Error (Exception): pass
 
-class CreateDB:
+def constuct_req_file(args):
+    ''' read the input requirements from user and create a new txt
+    file in the data_env that includes the requirements given by the user.
+    if a value wasn't provided by the user, use the defaults'''
+    print("Summarising the structural requirements...")
+    req_dict = {}
+    ## 1. Load default params:
+    with open(os.path.join(args.sling_dir,"default.txt")) as f: ## get all the values from the req file
+        for line in f:
+            key, val = line.strip().split()
+            if key != "order":
+                val = int(val)
+            req_dict[key] = val
 
-	def __init__(self, 
-		name,
-		hmm_file,
-		sling_dir,
-		order = None,
-		max_diff_avg_length = None,
-		min_hit_length = None,
-		max_hit_length = None,
-		min_upstream_length = None,
-		max_upstream_length = None,
-		min_downstream_length = None,
-		max_downstream_length = None,
-		max_distance = None,
-		max_overlap = None):
+    orders = ["upstream", "downstream", "either", "both"]
 
-		self.name = name.lower()
-		self.hmm_file = os.path.abspath(hmm_file)
-		self.sling_dir = sling_dir
-		if sling_dir != None:
-			self.sling_dir = os.path.join(os.path.abspath(sling_dir),"sling","data")
-		else:
-			print("####  \n Warning: path to git repository not provided. Adding collection only to local installation of SLING.\n ####")
-		
-		self.order = order
-		self.max_diff_avg_length = max_diff_avg_length
-		self.min_hit_length = min_hit_length
-		self.max_hit_length = max_hit_length
-		self.min_upstream_length = min_upstream_length
-		self.max_upstream_length = max_upstream_length
-		self.min_downstream_length = min_downstream_length
-		self.max_downstream_length = max_downstream_length
-		self.max_distance = max_distance
-		self.max_overlap = max_overlap
-		self.configs = utils.load_config_file() 
+    args_dict = vars(args)
+    for key in req_dict:
+        if args_dict[key] is not None:
+            if key == "order":
+                args_dict[key] = args_dict[key].lower()
+            req_dict[key] = args_dict[key]
 
+    utils.check_reqs(req_dict)
 
-	def _add_db(self, data_env):
-		with open(os.path.join(data_env,"DATABASES"),"a") as out:
-			out.write("\n" + self.name)
+    with open(os.path.join(args.sling_dir, args.name + ".txt"), "w") as out:
+        for key in req_dict:
+            out.write(key + "\t" + str(req_dict[key]) + "\n")
+    return
 
+def constuct_hmm_dbs(args):
+    ''' copy the HMM file to the SLING directory and run hmmpress'''
+    print("Constructing the HMM profile collection...")
+    if not os.path.isfile(args.hmm_db):
+        sys.exit("Error: could not find HMM file: [" + args.hmm_db + "]")
+    copyfile(args.hmm_db, os.path.join(args.sling_dir, args.name))
+    args.hmm_db = os.path.join(args.sling_dir, args.name)
+    subprocess.call([args.hmmpress, args.hmm_db])
+    return
 
-	def _constuct_hmm_files(self,data_env):
-		if not os.path.isfile(self.hmm_file):
-			sys.exit("Error: could not find HMM file: [" + self.hmm_file + "]") 
+def add_db(args):
+    ''' add the new database to the list of available DBs'''
+    print("Finalising")
+    with open(os.path.join(args.sling_dir,"DATABASES"),"a") as out:
+        out.write("\n" + args.name)
+    print("Successfully complete!")
+    return
 
-		copyfile(self.hmm_file, os.path.join(data_env, self.name))
-		
-		self.hmm_file = os.path.join(data_env, self.name)
-		subprocess.call([self.configs["hmmpress"],self.hmm_file])
+def run(args):
+    args.name = args.name.lower()
+    args.hmm_db = os.path.abspath(args.hmm_db)
 
-	def _constuct_req_file(self,data_env):
-		req_dict = {}
-		## 1. Load default params:
-		with open(os.path.join(data_env,"default.txt")) as f: ## get all the values from the req file
-			for line in f:
-				key, val = line.strip().split()
-				if key != "order":
-					val = int(val)
-				req_dict[key] = val
-		## replace default if given by user, and assert the value is ok.
-		if self.order != None:
-			self.order = self.order.lower()
-			orders = ["upstream", "downstream", "either", "both"]
-			if self.order not in orders:
-				sys.exit("Error: order must be " + str(orders) + ".")
-			req_dict["order"] = self.order
-		
-		if self.max_diff_avg_length != None:
-			req_dict["max_diff_avg_length"] = self.max_diff_avg_length
+    ## get SLING directory
+    if args.sling_dir is not None:
+        args.sling_dir = os.path.join(os.path.abspath(sling_dir),"sling","data")
+    else:
+        print("#### Warning: path to git repository not provided. Adding collection to local installation of SLING. ####")
+        d = os.path.abspath(os.path.dirname(__file__))
+        args.sling_dir = os.path.join(d, 'data/')
 
-		if self.min_hit_length != None:
-			req_dict["min_hit_length"] = self.min_hit_length
-		
-		if self.max_hit_length != None:
-			req_dict["max_hit_length"] = self.max_hit_length
-		
-		if self.min_upstream_length != None:
-			req_dict["min_upstream_length"] = self.min_upstream_length		
-		
-		if self.max_upstream_length != None:
-			req_dict["max_upstream_length"] = self.max_upstream_length
+    ## check the name is OK
+    reqs = utils.databases
+    if args.name in reqs:
+        sys.exit("Error: name given [" + args.name + "] already exists. Please choose different name")
 
-		if self.min_downstream_length != None:
-			req_dict["min_downstream_length"] = self.min_downstream_length		
-		
-		if self.max_downstream_length != None:
-			req_dict["max_downstream_length"] = self.max_downstream_length
-
-		if self.max_distance != None:
-			req_dict["max_distance"] = self.max_distance		
-		
-		if self.max_overlap != None:
-			req_dict["max_overlap"] = self.max_overlap
-
-		with open(os.path.join(data_env, self.name + ".txt"), "w") as out:
-			for key in req_dict:
-				out.write(key + "\t" + str(req_dict[key]) + "\n")
-
-
-	def run(self):
-		reqs = utils.databases
-
-		if self.name in reqs:
-			sys.exit("Error: name given [" + self.name + "] already exists. Please choose different name")
-
-		d = os.path.abspath(os.path.dirname(__file__))
-		data_env = os.path.join(d, 'data/')
-
-		## create the requirements file
-		print("Summarising the structural requirements...")
-		self._constuct_req_file(data_env)
-		if self.sling_dir != None:
-			self._constuct_req_file(self.sling_dir)
-
-		## create the hmm files and put them in the data environment
-		print("Constructing the HMM profile collection...")
-		self._constuct_hmm_files(data_env)
-		if self.sling_dir != None:
-			self._constuct_hmm_files(self.sling_dir)
-		## once everything has succeeded, add to the DATABASES file
-		print("Finalising")
-		self._add_db(data_env)
-		if self.sling_dir != None:
-			self._add_db(self.sling_dir)
-		
-		print("Successfully complete!")
-
-			
-			
-		
-
-
+    constuct_req_file(args)
+    constuct_hmm_dbs(args)
+    add_db(args)
+    return

@@ -1,3 +1,8 @@
+
+performance_analysis/
+run_tutorial.sh
+run_tests.py
+
 # Compiled python modules.
 *.pyc
 
@@ -29,5 +34,6 @@ figures_tables/
 lengths/
 systems_figures.R
 
+example/
 performance_analysis/
 run_tutorial.sh

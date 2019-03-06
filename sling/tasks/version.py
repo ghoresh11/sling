@@ -2,4 +2,4 @@ from sling import __version__ as sling_version
 import sling
 
 def run():
-    print(sling_version)
+    print("SLING verion: " + str(sling_version))
