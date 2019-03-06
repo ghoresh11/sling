@@ -24,3 +24,17 @@ Major changes:
 6. Outputs now return the sequences in nucleotide rather than protein sequence. It is easier to convert nucleotide to protein. The headers have slightly changed. Please refer to the wiki.
 
 7. Major code clean-up and restructuring.
+
+Minor changes:
+
+1. Fixed a bug with `create_db` which was relying on a deprecated version of SLING using a configuration file.
+
+2. `filter` now works with a pool object and is more efficient.
+
+3. Added more checks for input of structural requirements by the user.
+
+4. Nucleotide sequences which have more than 5% unknown bases (Ns or Xs), are removed already in the preparation step.
+
+5. ORFs from the annotation file (GFF) which are shorter than the stated `min_orf_length` in the preparation step are removed from further analysis.
+
+6. Installation requirements set for packages (fixed networkx bug)
