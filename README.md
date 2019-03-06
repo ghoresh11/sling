@@ -6,3 +6,21 @@ For details on how to use SLING, please see the [SLING wiki page](https://github
 To cite SLING: 
 
 Horesh G, Harms A, Fino C, Parts L, Gerdes K, Heinz E, et al. SLING: a tool to search for linked genes in bacterial datasets. Nucleic Acids Res. 2018; [doi:10.1093/nar/gky738](https://doi.org/10.1093/nar/gky738)
+
+##### March 6, 2019: Version 2.0
+
+Major changes:
+
+1. Input: GFF format can be provided alone if the FASTA sequence is at the end of the file (for instance, PROKKA output GFF files).
+
+2. No need to provide ID for all previous steps (prepare, scan, filter) when running any other task. SLING will assume the ID is the same as the current ID. This can be modified if running steps separately with multiple IDs (see wiki). 
+
+3. GROUP step now uses a length coverage cutoff for the alignment (how much of the query length does the alignment cover), for two proteins to be considered the same in the sequence similarity network. The default length coverage is 0.75.
+
+4. Default values changed for maximum overlap (from 300 to 50) and minimum blast identity (from 30 to 75).
+
+5. Sixframe ORFs and annotation ORFs are now in a single file at the end of the PREPARE step and are treated in a single file along the entire program.
+
+6. Outputs now return the sequences in nucleotide rather than protein sequence. It is easier to convert nucleotide to protein. The headers have slightly changed. Please refer to the wiki.
+
+7. Major code clean-up and restructuring.
