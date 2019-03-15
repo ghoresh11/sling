@@ -12,7 +12,6 @@ setup(
     description='sling: a tool to search for linked gene arrays in bacterial datasets',
     packages = find_packages(),
     package_data={'sling': ['data/*']},
-    data_files = [('sling',['CONFIG'])],
     author='Gal Horesh',
     author_email='gh11@sanger.ac.uk',
     url='https://github.com/ghoresh11/sling/wiki',
