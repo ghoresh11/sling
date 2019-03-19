@@ -1,8 +1,0 @@
-max_diff_avg_length	200
-min_hit_length	700
-max_hit_length	1500
-min_upstream_length	100
-max_upstream_length	1000
-max_distance	500
-max_overlap	20
-order	upstream

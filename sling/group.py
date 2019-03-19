@@ -38,13 +38,13 @@ def hits_to_fasta(args, out_dir, filter_dir):
     else: # otherwise treat them the same
         partners = open(os.path.join(out_dir ,"partners.fasta"),"w")
 
+    sequences_written = 0
     for file in os.listdir(filter_dir):
         if not file.endswith(".csv"): ## not a results file
             continue
 
         strain = os.path.basename(file)
         strain = strain.replace(".csv","")
-        sequences_written = 0
 
         with open(os.path.join(filter_dir,file)) as f:
             line_num = 0
