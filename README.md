@@ -7,6 +7,10 @@ To cite SLING:
 
 Horesh G, Harms A, Fino C, Parts L, Gerdes K, Heinz E, et al. SLING: a tool to search for linked genes in bacterial datasets. Nucleic Acids Res. 2018; [doi:10.1093/nar/gky738](https://doi.org/10.1093/nar/gky738)
 
+### February 14, 2020:  Version 2.0.1
+
+Added option to provide gzipped fasta files.
+
 ### March 6, 2019:  Version 2.0
 
 Major changes:
