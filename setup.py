@@ -8,7 +8,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='sling',
-    version='2.0.0',
+    version='2.0.1',
     description='sling: a tool to search for linked gene arrays in bacterial datasets',
     packages = find_packages(),
     package_data={'sling': ['data/*']},

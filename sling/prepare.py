@@ -7,6 +7,8 @@ import os
 from utils import *
 import re
 import copy
+import gzip
+
 
 class Error (Exception):
     pass
@@ -158,24 +160,28 @@ def prepare_one_genome(args):
 
 def sixframe_translation(args, sixframe_out, orf_locs_out):
     ''' Perform a 6-frame translation on all the FASTA files '''
-    with open(args["fasta_file"]) as handle:
-        for values in SimpleFastaParser(handle):
-            contig = values[0].split()[0]
+    if args["fasta_file"].endswith(".gz"):
+        handle = gzip.open(args["fasta_file"])
+    else:
+        handle = open(args["fasta_file"])
+    for values in SimpleFastaParser(handle):
+        contig = values[0].split()[0]
 
-            genome = values[1].lower()
-            rev_genome = reverse_complement(genome)
+        genome = values[1].lower()
+        rev_genome = reverse_complement(genome)
 
-            # save the contigs for the annotated ORF locs
-            args["contigs"][contig] = genome
+        # save the contigs for the annotated ORF locs
+        args["contigs"][contig] = genome
 
-            # doesn't assume the contigs are circular
-            for i in range(0, 3):
-                # standard
-                get_frame_orfs(args, translate(
-                    genome[i:], table=args["codon_table"]), genome[i:], i, contig, sixframe_out, orf_locs_out, genome)
-                # complement
-                get_frame_orfs(args, translate(
-                    rev_genome[i:], table=args["codon_table"]), rev_genome[i:], i + 3, contig, sixframe_out, orf_locs_out, genome)
+        # doesn't assume the contigs are circular
+        for i in range(0, 3):
+            # standard
+            get_frame_orfs(args, translate(
+                genome[i:], table=args["codon_table"]), genome[i:], i, contig, sixframe_out, orf_locs_out, genome)
+            # complement
+            get_frame_orfs(args, translate(
+                rev_genome[i:], table=args["codon_table"]), rev_genome[i:], i + 3, contig, sixframe_out, orf_locs_out, genome)
+    handle.close()
     return
 
 
